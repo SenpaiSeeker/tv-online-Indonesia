@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPTV Player</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+body {
+    background: #09090b;
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+#header {
+    height: 70px;
+    background: rgba(15, 15, 20, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    z-index: 10;
+}
+#search-container {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    position: relative;
+}
+#search {
+    width: 100%;
+    padding: 12px 24px;
+    border-radius: 30px;
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.4);
+    color: #fff;
+    font-size: 16px;
+    outline: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0);
+}
+#search:focus {
+    border-color: #0ff;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+#main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+#player-section {
+    flex: 1;
+    background: #000;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+#spinner {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #0ff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    display: none;
+    pointer-events: none;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+#controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+    padding: 40px 24px 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+#player-section:hover #controls {
+    opacity: 1;
+}
+.control-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    transition: color 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.control-btn:hover {
+    color: #0ff;
+    transform: scale(1.1);
+}
+#volume-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+input[type=range] {
+    -webkit-appearance: none;
+    width: 100px;
+    background: transparent;
+}
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 14px;
+    width: 14px;
+    border-radius: 50%;
+    background: #0ff;
+    cursor: pointer;
+    margin-top: -5px;
+    box-shadow: 0 0 10px #0ff;
+}
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+}
+#sidebar {
+    width: 380px;
+    background: rgba(15, 15, 20, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+}
+#list-container {
+    flex: 1;
+    overflow-y: auto;
+    position: relative;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,255,255,0.3) transparent;
+}
+#list-container::-webkit-scrollbar {
+    width: 6px;
+}
+#list-container::-webkit-scrollbar-thumb {
+    background-color: rgba(0,255,255,0.3);
+    border-radius: 3px;
+}
+#list-inner {
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+.channel-item {
+    position: absolute;
+    width: 100%;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    transition: background 0.2s ease;
+    gap: 16px;
+}
+.channel-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+.channel-item.active {
+    background: rgba(0, 255, 255, 0.1);
+    box-shadow: inset 4px 0 0 #0ff;
+}
+.channel-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    object-fit: contain;
+    background: rgba(255, 255, 255, 0.05);
+}
+.channel-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.channel-name {
+    font-weight: 600;
+    font-size: 14px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+.channel-group {
+    font-size: 11px;
+    color: #888;
+    margin-top: 4px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+:fullscreen #sidebar {
+    display: none;
+}
+:fullscreen #header {
+    display: none;
+}
+:fullscreen #controls {
+    opacity: 0;
+}
+:fullscreen #player-section:hover #controls {
+    opacity: 1;
+}
+:-webkit-full-screen #sidebar {
+    display: none;
+}
+:-webkit-full-screen #header {
+    display: none;
+}
+@media (max-width: 800px) {
+    #main {
+        flex-direction: column;
+    }
+    #sidebar {
+        width: 100%;
+        height: 50%;
+        border-left: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+}
+</style>
+</head>
+<body>
+
+<div id="header">
+    <div id="search-container">
+        <input type="text" id="search" placeholder="Search channels..." autocomplete="off" spellcheck="false">
+    </div>
+</div>
+
+<div id="main">
+    <div id="player-section">
+        <video id="video"></video>
+        <div id="spinner"></div>
+        <div id="controls">
+            <button class="control-btn" id="btn-play">▶</button>
+            <div id="volume-container">
+                <button class="control-btn" id="btn-mute">🔊</button>
+                <input type="range" id="volume" min="0" max="1" step="0.05" value="1">
+            </div>
+            <button class="control-btn" id="btn-fs">⛶</button>
+        </div>
+    </div>
+    
+    <div id="sidebar">
+        <div id="list-container">
+            <div id="list-inner"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+const SOURCE_URL = 'https://iptv-org.github.io/iptv/index.m3u';
+const ITEM_HEIGHT = 70;
+
+let channels = [];
+let filtered =[];
+let activeChannel = null;
+let hls = null;
+let searchTimeout = null;
+
+const video = document.getElementById('video');
+const spinner = document.getElementById('spinner');
+const listContainer = document.getElementById('list-container');
+const listInner = document.getElementById('list-inner');
+const searchInput = document.getElementById('search');
+const btnPlay = document.getElementById('btn-play');
+const btnMute = document.getElementById('btn-mute');
+const volumeSlider = document.getElementById('volume');
+const btnFs = document.getElementById('btn-fs');
+const playerSection = document.getElementById('player-section');
+
+async function init() {
+    try {
+        const cached = sessionStorage.getItem('iptv_cache');
+        if (cached) {
+            channels = JSON.parse(cached);
+        } else {
+            const res = await fetch(SOURCE_URL);
+            const text = await res.text();
+            parseM3U(text);
+            try {
+                sessionStorage.setItem('iptv_cache', JSON.stringify(channels));
+            } catch (e) {}
+        }
+        filtered = channels;
+        renderList();
+    } catch (e) {
+        alert('Failed to load playlist.');
+    }
+}
+
+function parseM3U(data) {
+    const lines = data.split('\n');
+    let current = {};
+    
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line.startsWith('#EXTINF:')) {
+            const logoMatch = line.match(/tvg-logo="(.*?)"/);
+            const groupMatch = line.match(/group-title="(.*?)"/);
+            const nameMatch = line.substring(line.lastIndexOf(',') + 1).trim();
+            
+            current = {
+                logo: logoMatch ? logoMatch[1] : '',
+                group: groupMatch ? groupMatch[1] : 'Uncategorized',
+                name: nameMatch || 'Unknown Channel',
+                id: i
+            };
+        } else if (line && !line.startsWith('#')) {
+            current.url = line;
+            if (current.name) {
+                channels.push(current);
+            }
+            current = {};
+        }
+    }
+}
+
+function renderList() {
+    const scrollTop = listContainer.scrollTop;
+    const viewportHeight = listContainer.clientHeight || window.innerHeight;
+    
+    const startIndex = Math.max(0, Math.floor(scrollTop / ITEM_HEIGHT) - 5);
+    const endIndex = Math.min(filtered.length, Math.ceil((scrollTop + viewportHeight) / ITEM_HEIGHT) + 5);
+    
+    listInner.style.height = `${filtered.length * ITEM_HEIGHT}px`;
+    listInner.innerHTML = '';
+    
+    const fragment = document.createDocumentFragment();
+    
+    for (let i = startIndex; i < endIndex; i++) {
+        const c = filtered[i];
+        if (!c) continue;
+        
+        const div = document.createElement('div');
+        div.className = `channel-item ${activeChannel && activeChannel.id === c.id ? 'active' : ''}`;
+        div.style.top = `${i * ITEM_HEIGHT}px`;
+        
+        div.onclick = () => playChannel(c);
+        
+        const img = document.createElement('img');
+        img.className = 'channel-logo';
+        img.src = c.logo || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+        img.onerror = function() { this.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; };
+        
+        const info = document.createElement('div');
+        info.className = 'channel-info';
+        
+        const name = document.createElement('div');
+        name.className = 'channel-name';
+        name.textContent = c.name;
+        
+        const group = document.createElement('div');
+        group.className = 'channel-group';
+        group.textContent = c.group;
+        
+        info.appendChild(name);
+        info.appendChild(group);
+        div.appendChild(img);
+        div.appendChild(info);
+        fragment.appendChild(div);
+    }
+    
+    listInner.appendChild(fragment);
+}
+
+function playChannel(c) {
+    activeChannel = c;
+    renderList();
+    
+    if (hls) {
+        hls.destroy();
+        hls = null;
+    }
+    
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+    
+    if (c.url.includes('.m3u8') && Hls.isSupported()) {
+        hls = new Hls({ maxMaxBufferLength: 30 });
+        hls.loadSource(c.url);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            video.play().catch(() => {});
+        });
+        hls.on(Hls.Events.ERROR, (event, data) => {
+            if (data.fatal) {
+                switch (data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
+                        hls.startLoad();
+                        break;
+                    case Hls.ErrorTypes.MEDIA_ERROR:
+                        hls.recoverMediaError();
+                        break;
+                    default:
+                        hls.destroy();
+                        break;
+                }
+            }
+        });
+    } else {
+        video.src = c.url;
+        video.play().catch(() => {});
+    }
+}
+
+searchInput.addEventListener('input', (e) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        const q = e.target.value.toLowerCase();
+        if (!q) {
+            filtered = channels;
+        } else {
+            filtered = channels.filter(c => c.name.toLowerCase().includes(q));
+        }
+        listContainer.scrollTop = 0;
+        renderList();
+    }, 250);
+});
+
+listContainer.addEventListener('scroll', () => {
+    window.requestAnimationFrame(renderList);
+});
+
+window.addEventListener('resize', () => {
+    window.requestAnimationFrame(renderList);
+});
+
+video.addEventListener('waiting', () => {
+    spinner.style.display = 'block';
+});
+
+video.addEventListener('playing', () => {
+    spinner.style.display = 'none';
+    btnPlay.textContent = '⏸';
+});
+
+video.addEventListener('pause', () => {
+    btnPlay.textContent = '▶';
+});
+
+btnPlay.addEventListener('click', () => {
+    if (video.paused) {
+        video.play().catch(() => {});
+    } else {
+        video.pause();
+    }
+});
+
+btnMute.addEventListener('click', () => {
+    video.muted = !video.muted;
+    btnMute.textContent = video.muted ? '🔇' : '🔊';
+    if(video.muted) {
+        volumeSlider.value = 0;
+    } else {
+        volumeSlider.value = video.volume || 1;
+    }
+});
+
+volumeSlider.addEventListener('input', (e) => {
+    video.volume = e.target.value;
+    if (video.volume > 0) {
+        video.muted = false;
+        btnMute.textContent = '🔊';
+    } else {
+        video.muted = true;
+        btnMute.textContent = '🔇';
+    }
+});
+
+btnFs.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+        if (playerSection.requestFullscreen) {
+            playerSection.requestFullscreen();
+        } else if (playerSection.webkitRequestFullscreen) {
+            playerSection.webkitRequestFullscreen();
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        }
+    }
+});
+
+init();
+</script>
+</body>
+</html>
