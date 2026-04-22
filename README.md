@@ -455,15 +455,15 @@ git push origin feature/fitur-baru
 
 <div align="center">
 
-![GitHub stars](https://img.shields.io/github/stars/username/tv-online-indonesia?style=social)
-![GitHub forks](https://img.shields.io/github/forks/username/tv-online-indonesia?style=social)
-![GitHub watchers](https://img.shields.io/github/watchers/username/tv-online-indonesia?style=social)
+![GitHub stars](https://img.shields.io/github/stars/SenpaiSeeker/tv-online-indonesia?style=social)
+![GitHub forks](https://img.shields.io/github/forks/SenpaiSeeker/tv-online-indonesia?style=social)
+![GitHub watchers](https://img.shields.io/github/watchers/SenpaiSeeker/tv-online-indonesia?style=social)
 
 <br/>
 
-![GitHub last commit](https://img.shields.io/github/last-commit/username/tv-online-indonesia?style=flat-square&color=00d4ff)
-![GitHub repo size](https://img.shields.io/github/repo-size/username/tv-online-indonesia?style=flat-square&color=7c3aed)
-![GitHub code size](https://img.shields.io/github/languages/code-size/username/tv-online-indonesia?style=flat-square&color=10b981)
+![GitHub last commit](https://img.shields.io/github/last-commit/SenpaiSeeker/tv-online-indonesia?style=flat-square&color=00d4ff)
+![GitHub repo size](https://img.shields.io/github/repo-size/SenpaiSeeker/tv-online-indonesia?style=flat-square&color=7c3aed)
+![GitHub code size](https://img.shields.io/github/languages/code-size/SenpaiSeeker/tv-online-indonesia?style=flat-square&color=10b981)
 
 </div>
 
