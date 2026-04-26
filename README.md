@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:030508,50:00d4ff,100:7c3aed&height=220&section=header&text=NusaTV&fontSize=80&fontColor=ffffff&fontAlignY=38&desc=🌏%20Free%20IPTV%20Player%20%7C%208000%2B%20Channels%20%7C%20Live%20Stream&descAlignY=60&descSize=18&animation=twinkling" width="100%"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:030508,40:00d4ff,100:7c3aed&height=230&section=header&text=NusaTV&fontSize=86&fontColor=ffffff&fontAlignY=38&desc=🌏%20Free%20IPTV%20Player%20%7C%208000%2B%20Channels%20%7C%2031%20Kategori%20%7C%20Live%20Stream&descAlignY=60&descSize=17&animation=twinkling" width="100%"/>
 
 <br/>
 
@@ -11,6 +11,8 @@
 [![Streams](https://img.shields.io/badge/📡%20STREAMS-14000%2B-ff3b6b?style=for-the-badge&labelColor=030508)](https://tv-online-indonesia.vercel.app/)
 &nbsp;
 [![Countries](https://img.shields.io/badge/🌍%20COUNTRIES-200%2B-10b981?style=for-the-badge&labelColor=030508)](https://tv-online-indonesia.vercel.app/)
+&nbsp;
+[![Categories](https://img.shields.io/badge/📂%20CATEGORIES-31-f59e0b?style=for-the-badge&labelColor=030508)](https://tv-online-indonesia.vercel.app/)
 
 <br/>
 
@@ -18,6 +20,7 @@
 [![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS)
 [![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![HLS.js](https://img.shields.io/badge/HLS.js-FF6B35?style=flat-square&logo=javascript&logoColor=white)](https://github.com/video-dev/hls.js/)
+[![Web Audio API](https://img.shields.io/badge/Web%20Audio%20API-00d4ff?style=flat-square&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)
 [![Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-000000?style=flat-square&logo=vercel&logoColor=white)](https://vercel.com/)
 [![iptv-org](https://img.shields.io/badge/Data-iptv--org-00d4ff?style=flat-square&logo=github&logoColor=white)](https://iptv-org.github.io/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
@@ -39,7 +42,7 @@
 ║    ██║ ╚████║╚██████╔╝███████║██║  ██║   ██║    ╚████╔╝                ║
 ║    ╚═╝  ╚═══╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝     ╚═══╝                ║
 ║                                                                          ║
-║              Free · Open · Live · No Ads · No Login                     ║
+║         Free · Open · Live · No Ads · No Login · No Install             ║
 ║                                                                          ║
 ╚══════════════════════════════════════════════════════════════════════════╝
 ```
@@ -58,11 +61,11 @@
 
 <br/>
 
-| Platform | Status | Link |
-|:---:|:---:|:---:|
-| 🖥️ Desktop | ![status](https://img.shields.io/badge/✅-Optimal-00d4ff?style=flat-square) | [Buka](https://tv-online-indonesia.vercel.app/) |
-| 📱 Mobile | ![status](https://img.shields.io/badge/✅-Responsive-7c3aed?style=flat-square) | [Buka](https://tv-online-indonesia.vercel.app/) |
-| 📺 Smart TV | ![status](https://img.shields.io/badge/✅-Supported-10b981?style=flat-square) | [Buka](https://tv-online-indonesia.vercel.app/) |
+| Platform | Status | Keterangan |
+|:---:|:---:|:---|
+| 🖥️ Desktop | ![status](https://img.shields.io/badge/✅-Optimal-00d4ff?style=flat-square) | Semua fitur tersedia penuh |
+| 📱 Mobile | ![status](https://img.shields.io/badge/✅-Responsive-7c3aed?style=flat-square) | UI adaptif, touch-friendly |
+| 📺 Smart TV | ![status](https://img.shields.io/badge/✅-Supported-10b981?style=flat-square) | Navigasi keyboard & fullscreen |
 
 </div>
 
@@ -70,12 +73,12 @@
 
 ## 📺 Tentang NusaTV
 
-**NusaTV** adalah aplikasi pemutar IPTV berbasis web modern yang memungkinkan siapa saja menonton **8000+ saluran televisi dari seluruh dunia secara gratis** langsung di browser. Tidak perlu instalasi, tidak perlu login, tidak ada iklan.
+**NusaTV** adalah aplikasi pemutar IPTV berbasis web modern yang memungkinkan siapa saja menonton **8000+ saluran televisi dari seluruh dunia secara gratis** langsung di browser — tanpa instalasi, tanpa login, tanpa iklan.
 
 Data saluran diambil secara real-time dari **[iptv-org](https://iptv-org.github.io/)** — repositori IPTV publik terbesar di dunia dengan ribuan kontributor aktif.
 
 ```
-📡 Sumber Data:
+📡 Sumber Data API (iptv-org.github.io/api):
    ├── channels.json   → Info lengkap saluran (nama, logo, negara, kategori)
    ├── streams.json    → URL stream langsung (M3U8/HLS)
    └── countries.json  → Data negara (nama lengkap + bendera emoji)
@@ -85,62 +88,116 @@ Data saluran diambil secara real-time dari **[iptv-org](https://iptv-org.github.
 
 ## ✨ Fitur Lengkap
 
-<div align="center">
-
 ### 🎬 Kontrol Video
 
-</div>
-
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  ⏮  PREV   ▶/⏸  PLAY/PAUSE   ⏭  NEXT   🔇  MUTE/UNMUTE   │
-│                                                               │
-│  📊  Volume Slider (0-100%)   dengan visual gradient         │
-│  🔴  Progress Bar interaktif  klik untuk seek               │
-│  ⏱   Time Display            MM:SS / LIVE indicator         │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│  ⏮  PREV   ▶/⏸  PLAY/PAUSE   ⏭  NEXT   🔇  MUTE/UNMUTE        │
+│                                                                    │
+│  📊  Volume Slider (0–100%)    Visual gradient real-time          │
+│  🔴  Progress Bar interaktif   Klik untuk seek (VOD)             │
+│  ⏱   Time Display             MM:SS / LIVE indicator             │
+│  📡  Quality Selector          AUTO / 480p / 720p / 1080p        │
+└──────────────────────────────────────────────────────────────────┘
 ```
-
-<div align="center">
 
 ### 🔍 Zoom & Display
 
-</div>
-
 | Aksi | Cara | Range |
 |------|------|-------|
-| 🔎 Zoom In | Tombol `+` / Scroll Up / Klik ikon | Hingga 300% |
-| 🔍 Zoom Out | Tombol `-` / Scroll Down / Klik ikon | Minimum 50% |
-| 🔄 Reset Zoom | Tombol `0` / Klik reset | 100% |
-| 📍 Overlay Info | Muncul otomatis saat zoom berubah | Auto-hide 1.5s |
-
-<div align="center">
+| 🔎 Zoom In | Tombol `+` / Scroll Up / Ikon zoom | Hingga **300%** |
+| 🔍 Zoom Out | Tombol `-` / Scroll Down / Ikon zoom | Minimum **50%** |
+| 🔄 Reset Zoom | Tombol `0` / Klik reset | **100%** |
+| 📍 Overlay Persen | Muncul otomatis saat zoom berubah | Auto-hide 1.4s |
 
 ### 🖥️ Mode Tampilan
 
-</div>
-
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                                                                │
-│   🎭  THEATER MODE     Sembunyikan header & sidebar          │
-│   📺  FULLSCREEN       Layar penuh browser (F)               │
-│   📱  PICTURE-IN-PIP   Tonton sambil kerja (P)               │
-│   📸  SCREENSHOT       Ambil tangkapan layar (S)             │
-│                                                                │
-└──────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                                                                    │
+│   🎭  THEATER MODE     Sembunyikan header & sidebar (T)          │
+│   📺  FULLSCREEN       Layar penuh browser (F / Double-click)    │
+│   📱  PICTURE-IN-PIP   Tonton sambil kerja di tab lain (P)       │
+│   📸  SCREENSHOT       Ambil & unduh tangkapan layar (S)         │
+│                                                                    │
+└──────────────────────────────────────────────────────────────────┘
 ```
-
-<div align="center">
 
 ### 📋 Filter & Pencarian
 
-</div>
+- **🔎 Search Channel** — Debounced real-time search 250ms, cocokkan nama & alt_names
+- **🌍 Filter Negara** — Custom dropdown: bendera emoji + nama lengkap + jumlah channel + search dalam dropdown
+- **📂 Filter Kategori** — 31 tab kategori lengkap (lihat tabel di bawah)
+- **❤️ Tab Favorit** — Filter khusus menampilkan channel yang disimpan
 
-- **🔎 Search Channel** — Cari nama saluran secara real-time
-- **🌍 Filter Negara** — Custom dropdown dengan bendera emoji + nama lengkap + jumlah channel + search
-- **📂 Filter Kategori** — Tab: Semua · General · Berita · Olahraga · Film · Musik · Anak · Hiburan
-- **📊 Channel Count** — Badge jumlah saluran yang sesuai filter
+### ❤️ Favorit Channel
+
+- Klik ikon ❤️ pada setiap channel di daftar, atau tombol hover di atas video
+- Data tersimpan permanen di **localStorage** (tidak hilang saat refresh)
+- Modal **Favorit** di header menampilkan semua channel tersimpan
+- Klik langsung dari modal untuk langsung memutar channel
+
+### 🕐 Riwayat Tontonan (History)
+
+- Otomatis dicatat setiap kali mengganti channel
+- Menyimpan hingga **50 entri** terakhir
+- Waktu relatif: *Baru saja · 5 menit lalu · 2 jam lalu · dd/mm/yyyy*
+- Bisa hapus per entri individual
+- Tersimpan di **localStorage**
+
+### 📝 Import Playlist M3U
+
+```
+Metode Import:
+├── Drag & Drop file .m3u / .m3u8 langsung ke area drop
+├── Browse file dari penyimpanan lokal
+└── Load dari URL remote (jika server mengizinkan CORS)
+
+Tag yang didukung parser:
+├── #EXTINF     → nama channel
+├── tvg-logo    → logo channel
+├── group-title → kategori
+└── tvg-country → kode negara
+```
+
+Tombol **Reset ke IPTV-ORG** untuk kembali ke sumber data asli kapan saja.
+
+### 🎨 Theme Switcher
+
+| Tema | Deskripsi |
+|:---:|:---|
+| 🌑 **Dark** | Default — latar hitam kebiruan, aksen cyan |
+| ☀️ **Light** | Latar abu terang, cocok di ruangan terang |
+| ⬛ **AMOLED** | Hitam pekat 100%, hemat baterai layar OLED |
+| 🌌 **Midnight** | Deep navy blue, aksen biru langit |
+
+Tema tersimpan di **localStorage** dan diterapkan via CSS Custom Properties `[data-theme]`.
+
+### 🔊 Audio Equalizer (5-Band)
+
+| Band | Frekuensi | Tipe Filter | Range |
+|:---:|:---:|:---:|:---:|
+| Bass | 60 Hz | Low Shelf | ±12 dB |
+| Low-Mid | 250 Hz | Peaking | ±12 dB |
+| Mid | 1 kHz | Peaking | ±12 dB |
+| High-Mid | 4 kHz | Peaking | ±12 dB |
+| Treble | 16 kHz | High Shelf | ±12 dB |
+
+**Preset bawaan:** `Flat` · `Bass Boost` · `Vocal` · `Cinema`
+
+Dibangun menggunakan **Web Audio API** (BiquadFilterNode). Nilai EQ tersimpan di localStorage.
+
+### 📡 Stream Quality Selector
+
+- Otomatis mendeteksi semua level kualitas dari HLS manifest
+- Opsi: **AUTO** (adaptive bitrate) + semua resolusi tersedia
+- Tampil resolusi + bitrate (kbps) untuk tiap level
+
+### 📅 EPG — Jadwal Acara
+
+- Jadwal simulasi 8 slot acara disekitar waktu sekarang
+- Konten jadwal disesuaikan dengan **kategori channel** aktif
+- Slot "SEKARANG" ditandai dengan highlight visual berbeda
 
 ---
 
@@ -156,7 +213,30 @@ Data saluran diambil secara real-time dari **[iptv-org](https://iptv-org.github.
 | `↑` | 🔊 Volume +5% | `↓` | 🔉 Volume -5% |
 | `+` / `=` | 🔎 Zoom In | `-` / `_` | 🔍 Zoom Out |
 | `0` | 🔄 Reset Zoom | `T` | 🎭 Theater Mode |
-| `S` | 📸 Screenshot | `Scroll` | 🔍 Zoom di Video |
+| `S` | 📸 Screenshot | `Scroll` | 🔍 Zoom di atas video |
+| `Esc` | ❌ Tutup modal | `Dbl-click` | 🖥️ Toggle Fullscreen |
+
+</div>
+
+---
+
+## 🗂️ Kategori Channel — 31 Kategori
+
+<div align="center">
+
+| Kategori | Ikon | Kategori | Ikon | Kategori | Ikon |
+|:---|:---:|:---|:---:|:---|:---:|
+| Semua | 🌐 | Umum | 📡 | Berita | 📰 |
+| Olahraga | ⚽ | Film | 🎬 | Series | 📺 |
+| Hiburan | 🎪 | Musik | 🎵 | Anime | 🎌 |
+| Anak-anak | 👶 | Keluarga | 👨‍👩‍👧 | Dokumenter | 🎥 |
+| Pendidikan | 📚 | Lifestyle | 🌿 | Memasak | 🍳 |
+| Travel | ✈️ | Sains | 🔬 | Bisnis | 💼 |
+| Otomotif | 🚗 | Komedi | 😂 | Budaya | 🎭 |
+| Religi | ⛪ | Klasik | 📼 | Hobi | 🎯 |
+| Outdoor | 🏕 | Lokal | 🏙 | Belanja | 🛍 |
+| Cuaca | 🌤 | Relaksasi | 😌 | Legislatif | 🏛 |
+| Dewasa | 🔞 | **Favorit** | ❤️ | | |
 
 </div>
 
@@ -169,15 +249,12 @@ NusaTV mengkonsumsi **3 endpoint** dari [iptv-org API](https://iptv-org.github.i
 ```javascript
 const API_BASE = 'https://iptv-org.github.io/api';
 
-// 1. Data lengkap semua saluran TV
 GET ${API_BASE}/channels.json
-→ id, name, alt_names, country, categories, logo, website, ...
+→ id, name, alt_names, country, categories, logo, languages, broadcast_area ...
 
-// 2. URL stream langsung (M3U8/HLS)
 GET ${API_BASE}/streams.json
-→ channel, url, quality, http_referrer, user_agent, ...
+→ channel, url, quality, http_referrer, user_agent, status ...
 
-// 3. Data negara (nama lengkap + emoji bendera)
 GET ${API_BASE}/countries.json
 → code, name, flag, languages
 ```
@@ -193,8 +270,9 @@ GET ${API_BASE}/countries.json
   "network": "MNC Media",
   "country": "ID",
   "categories": ["general"],
+  "languages": ["ind"],
+  "broadcast_area": ["c/ID"],
   "is_nsfw": false,
-  "website": "https://www.rcti.tv/",
   "logo": "https://..."
 }
 ```
@@ -209,7 +287,8 @@ GET ${API_BASE}/countries.json
   "url": "https://example.com/stream/rcti.m3u8",
   "quality": "HD",
   "http_referrer": null,
-  "user_agent": null
+  "user_agent": null,
+  "status": "online"
 }
 ```
 </details>
@@ -232,54 +311,58 @@ GET ${API_BASE}/countries.json
 ## 🏗️ Arsitektur & Teknologi
 
 ```
-NusaTV
-├── 📄 index.html               ← Single-file app (HTML + CSS + JS)
+NusaTV — index.html (Single-file App)
 │
 ├── 🎨 CSS Architecture
-│   ├── CSS Custom Properties    CSS variables untuk theming konsisten
-│   ├── Grid Layout              Header + Sidebar + Main player
-│   ├── Backdrop-filter          Blur effects pada overlay
-│   └── CSS Animations           Pulse, spin, fade, slide transitions
+│   ├── CSS Custom Properties    4 tema via :root + [data-theme]
+│   ├── CSS Grid Layout          Header + Sidebar + Main player
+│   ├── Virtual Scroll CSS       Absolute positioning per item
+│   └── Transition & Animation   Sidebar, modal, toast
 │
 ├── 📡 Data Layer
 │   ├── fetchJSON()              Fetch wrapper dengan error handling
-│   ├── channelStreamMap{}       Hash map channel → streams (O(1) lookup)
+│   ├── channelStreamMap{}       Hash map channel→streams (O(1) lookup)
 │   └── countryMap{}             Hash map ISO code → nama + bendera
 │
 ├── 🎬 Video Engine
-│   ├── HLS.js v1.5.7            HLS/M3U8 streaming support
-│   ├── Native HLS               Fallback untuk Safari/iOS
-│   ├── Auto Retry               3x retry dengan delay 2 detik
+│   ├── HLS.js v1.5.7            HLS/M3U8 streaming + quality level selector
+│   ├── Native HLS               Fallback untuk Safari / iOS
+│   ├── Auto Retry               3× retry dengan delay 2.5 detik
 │   └── Stream Switching         Ganti channel tanpa reload halaman
 │
 ├── 🖥️ Player Features
-│   ├── Zoom Engine              CSS transform scale (0.5x – 3x)
-│   ├── Volume Control           Slider + display + mute toggle
+│   ├── Zoom Engine              CSS transform scale (0.5× – 3×)
+│   ├── Volume Control           Slider + gradient + mute toggle
 │   ├── Progress Bar             Klik-to-seek + live indicator
 │   ├── Fullscreen API           Browser native fullscreen
 │   ├── PiP API                  Picture-in-Picture native API
-│   └── Canvas Screenshot        Video frame capture + download
+│   ├── Canvas Screenshot        Video frame capture + auto download
+│   └── Quality Selector         HLS level picker (AUTO + resolusi)
 │
-└── 🎯 UI Components
-    ├── Custom Country Dropdown  Dengan search + bendera + count
-    ├── Channel List             Virtualisasi scroll + logo fallback
-    ├── Toast System             Stack notifikasi animasi
-    └── Keyboard Handler         Global shortcut listener
-```
-
----
-
-## 📁 Struktur File
-
-```
-tv-online-indonesia/
+├── 🔊 Audio Engine
+│   ├── AudioContext             Web Audio API
+│   ├── MediaElementSourceNode   Bridge video → audio graph
+│   ├── BiquadFilterNode ×5      5-band parametric EQ
+│   └── EQ Presets               Flat / Bass / Vocal / Cinema
 │
-├── 📄 index.html          ← Aplikasi utama (self-contained)
-├── 📋 README.md           ← Dokumentasi ini
-└── 📦 vercel.json         ← Konfigurasi deploy (opsional)
+├── 💾 Persistensi (localStorage)
+│   ├── nusa_favs                Daftar channel favorit (array id)
+│   ├── nusa_hist                Riwayat 50 tontonan terakhir
+│   ├── nusa_eq                  Nilai 5-band equalizer
+│   └── nusa_theme               Tema aktif
+│
+├── 📝 M3U Parser
+│   ├── #EXTINF parser           Nama, logo, group-title, tvg-country
+│   ├── File input               FileReader API
+│   ├── Drag & Drop              DataTransfer API
+│   └── URL loader               Fetch remote playlist
+│
+└── ⚡ Performa
+    ├── Virtual Scroll           Hanya render item di viewport (8000+ CH)
+    ├── Debounced Search         250ms delay sebelum filter
+    ├── requestAnimationFrame    Progress bar & scroll tanpa jank
+    └── System Font Stack        Tidak load Google Fonts eksternal
 ```
-
-> **Zero Dependencies** — Tidak ada package.json, tidak ada node_modules, tidak ada build step. Cukup satu file HTML.
 
 ---
 
@@ -288,14 +371,13 @@ tv-online-indonesia/
 ### ▶ Jalankan Lokal
 
 ```bash
-# Clone repositori
 git clone https://github.com/username/tv-online-indonesia.git
 cd tv-online-indonesia
 
-# Buka langsung di browser (tidak perlu server)
+# Buka langsung (tidak perlu server untuk fitur dasar)
 open index.html
 
-# Atau gunakan server lokal sederhana
+# Atau gunakan server lokal
 npx serve .
 # → http://localhost:3000
 ```
@@ -303,13 +385,8 @@ npx serve .
 ### ☁️ Deploy ke Vercel
 
 ```bash
-# Install Vercel CLI
 npm i -g vercel
-
-# Deploy
 vercel --prod
-
-# Output:
 # ✅ Production: https://tv-online-indonesia.vercel.app
 ```
 
@@ -334,54 +411,46 @@ docker run -p 8080:80 nusatv
 
 <div align="center">
 
-| Browser | HLS Support | PiP | Screenshot | Status |
-|:---:|:---:|:---:|:---:|:---:|
-| ![Chrome](https://img.shields.io/badge/Chrome-90%2B-4285F4?style=flat-square&logo=googlechrome&logoColor=white) | ✅ HLS.js | ✅ | ✅ | ![OK](https://img.shields.io/badge/-Optimal-00d4ff?style=flat-square) |
-| ![Firefox](https://img.shields.io/badge/Firefox-88%2B-FF7139?style=flat-square&logo=firefox&logoColor=white) | ✅ HLS.js | ✅ | ✅ | ![OK](https://img.shields.io/badge/-Optimal-00d4ff?style=flat-square) |
-| ![Edge](https://img.shields.io/badge/Edge-90%2B-0078D7?style=flat-square&logo=microsoftedge&logoColor=white) | ✅ HLS.js | ✅ | ✅ | ![OK](https://img.shields.io/badge/-Optimal-00d4ff?style=flat-square) |
-| ![Safari](https://img.shields.io/badge/Safari-14%2B-000000?style=flat-square&logo=safari&logoColor=white) | ✅ Native | ✅ | ⚠️ CORS | ![Good](https://img.shields.io/badge/-Good-10b981?style=flat-square) |
-| ![Brave](https://img.shields.io/badge/Brave-Latest-FB542B?style=flat-square&logo=brave&logoColor=white) | ✅ HLS.js | ✅ | ✅ | ![OK](https://img.shields.io/badge/-Optimal-00d4ff?style=flat-square) |
+| Browser | HLS | PiP | EQ | Screenshot | Status |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| ![Chrome](https://img.shields.io/badge/Chrome-90%2B-4285F4?style=flat-square&logo=googlechrome&logoColor=white) | ✅ HLS.js | ✅ | ✅ | ✅ | ![OK](https://img.shields.io/badge/-Optimal-00d4ff?style=flat-square) |
+| ![Brave](https://img.shields.io/badge/Brave-Latest-FB542B?style=flat-square&logo=brave&logoColor=white) | ✅ HLS.js | ✅ | ✅ | ✅ | ![OK](https://img.shields.io/badge/-Optimal-00d4ff?style=flat-square) |
+| ![Edge](https://img.shields.io/badge/Edge-90%2B-0078D7?style=flat-square&logo=microsoftedge&logoColor=white) | ✅ HLS.js | ✅ | ✅ | ✅ | ![OK](https://img.shields.io/badge/-Optimal-00d4ff?style=flat-square) |
+| ![Firefox](https://img.shields.io/badge/Firefox-88%2B-FF7139?style=flat-square&logo=firefox&logoColor=white) | ✅ HLS.js | ✅ | ✅ | ✅ | ![OK](https://img.shields.io/badge/-Optimal-00d4ff?style=flat-square) |
+| ![Safari](https://img.shields.io/badge/Safari-14%2B-000000?style=flat-square&logo=safari&logoColor=white) | ✅ Native | ✅ | ⚠️ | ⚠️ CORS | ![Good](https://img.shields.io/badge/-Good-10b981?style=flat-square) |
 
 </div>
 
----
-
-## 🗂️ Kategori Channel
-
-<div align="center">
-
-| Kategori | Ikon | Deskripsi |
-|:---:|:---:|:---|
-| **Semua** | 🌐 | Seluruh channel yang tersedia |
-| **General** | 📺 | TV umum, channel nasional |
-| **Berita** | 📰 | CNN, BBC, Al Jazeera, MetroTV, dll |
-| **Olahraga** | ⚽ | ESPN, beIN Sports, SPOTV, dll |
-| **Film** | 🎬 | HBO, Netflix live, bioskop |
-| **Musik** | 🎵 | MTV, MBC Music, iHeart |
-| **Anak** | 👶 | Disney, Cartoon Network, Nickelodeon |
-| **Hiburan** | 🎭 | Variety show, lifestyle, travel |
-
-</div>
+> ⚠️ Safari: Web Audio API membutuhkan interaksi user pertama sebelum aktif. Screenshot gagal pada stream dengan proteksi CORS.
 
 ---
 
-## 🌟 Highlight Fitur
+## 🌟 Highlight
 
 <div align="center">
 
 ```
-╭──────────────────────────────────────────────────────────╮
-│                                                            │
-│   ✦  Zero Setup    Langsung buka, langsung nonton        │
-│   ✦  Zero Cost     100% gratis, selamanya                │
-│   ✦  Zero Login    Tidak perlu akun atau registrasi      │
-│   ✦  Zero Ads      Tidak ada iklan sama sekali           │
-│   ✦  Real-time     Data saluran selalu terkini           │
-│   ✦  Global        200+ negara, 8000+ saluran            │
-│   ✦  Smart Retry   Auto reconnect jika stream putus      │
-│   ✦  Dark UI       Desain gelap nyaman di mata           │
-│                                                            │
-╰──────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────╮
+│                                                                │
+│   ✦  Zero Setup      Langsung buka, langsung nonton          │
+│   ✦  Zero Cost       100% gratis, selamanya                  │
+│   ✦  Zero Login      Tidak perlu akun atau registrasi        │
+│   ✦  Zero Ads        Tidak ada iklan sama sekali             │
+│   ✦  Zero Install    Tidak perlu app, cukup browser          │
+│                                                                │
+│   ✦  Real-time       Data saluran selalu terkini             │
+│   ✦  8000+ CH        Channel dari 200+ negara                │
+│   ✦  31 Kategori     Filter konten sesuai selera             │
+│   ✦  Smart Retry     Auto reconnect jika stream putus        │
+│   ✦  Virtual Scroll  Ringan walau 8000+ channel              │
+│   ✦  4 Tema          Dark / Light / AMOLED / Midnight        │
+│   ✦  EQ 5-Band       Atur suara sesuai selera + 4 preset     │
+│   ✦  Custom M3U      Import playlist sendiri                 │
+│   ✦  Favorit         Simpan & kelola channel favorit         │
+│   ✦  Riwayat         History 50 tontonan terakhir            │
+│   ✦  EPG             Jadwal acara per kategori channel       │
+│                                                                │
+╰──────────────────────────────────────────────────────────────╯
 ```
 
 </div>
@@ -391,18 +460,16 @@ docker run -p 8080:80 nusatv
 ## 🛠️ Konfigurasi HLS.js
 
 ```javascript
-const hls = new Hls({
+hls = new Hls({
   enableWorker: true,
   lowLatencyMode: true,
-  backBufferLength: 90,
-  maxLoadingDelay: 4,
-  maxBufferLength: 30,
-  fragLoadingTimeOut: 20000,
-  manifestLoadingTimeOut: 15000
+  maxBufferLength: 20,
+  fragLoadingTimeOut: 18000,
+  manifestLoadingTimeOut: 12000
 });
 ```
 
-> Konfigurasi dioptimalkan untuk **live streaming** dengan latensi rendah dan auto-recovery saat koneksi bermasalah.
+> Dikonfigurasi untuk **live streaming** dengan latensi rendah, buffer minimal, dan auto-recovery hingga 3× retry dengan delay 2.5 detik.
 
 ---
 
@@ -411,10 +478,11 @@ const hls = new Hls({
 > **Disclaimer** — NusaTV hanya memutar link stream yang tersedia secara publik melalui [iptv-org](https://github.com/iptv-org/iptv). Semua konten adalah milik masing-masing penyiar. Tidak ada konten yang disimpan di repositori ini.
 
 ```
-⚠  Beberapa stream mungkin tidak tersedia di wilayah tertentu
-⚠  Kualitas stream tergantung kecepatan internet Anda
-⚠  Stream bisa berubah atau tidak aktif sewaktu-waktu
-⚠  Screenshot mungkin gagal pada stream dengan proteksi CORS
+⚠  Beberapa stream mungkin tidak tersedia di wilayah tertentu (geo-block)
+⚠  Kualitas stream tergantung kecepatan internet dan server penyiar
+⚠  Stream bisa berubah URL atau tidak aktif sewaktu-waktu
+⚠  Screenshot gagal pada stream dengan header proteksi CORS
+⚠  Import M3U dari URL remote membutuhkan CORS aktif di server sumber
 ⚠  Gunakan VPN jika stream terblokir di wilayah Anda
 ```
 
@@ -422,32 +490,33 @@ const hls = new Hls({
 
 ## 🤝 Kontribusi
 
-Kontribusi sangat disambut! Berikut cara berkontribusi:
-
 ```bash
-# 1. Fork repositori ini
-# 2. Buat branch fitur baru
-git checkout -b feature/fitur-baru
-
-# 3. Commit perubahan
-git commit -m "feat: tambah fitur baru"
-
-# 4. Push ke branch
-git push origin feature/fitur-baru
-
-# 5. Buat Pull Request
+# Fork, buat branch, commit, push, buat Pull Request
+git checkout -b feature/nama-fitur
+git commit -m "feat: deskripsi fitur"
+git push origin feature/nama-fitur
 ```
 
-### 💡 Ide Fitur yang Bisa Ditambahkan
+### ✅ Fitur yang Sudah Diimplementasikan
 
-- [ ] 📅 EPG (Electronic Program Guide) — jadwal acara
-- [ ] ⭐ Favorit channel — simpan channel favorit
-- [ ] 🕐 History — riwayat channel terakhir ditonton
-- [ ] 📝 Custom M3U — import playlist M3U sendiri
-- [ ] 🎨 Theme switcher — light/dark/custom
-- [ ] 🔊 Audio equalizer — pengaturan suara
-- [ ] 📡 Stream quality selector — pilih kualitas manual
-- [ ] 🌐 Chromecast support — streaming ke TV
+- [x] 📅 EPG — jadwal acara simulasi per kategori channel
+- [x] ❤️ Favorit — simpan & kelola channel favorit (localStorage)
+- [x] 🕐 History — riwayat 50 tontonan terakhir (localStorage)
+- [x] 📝 Custom M3U — import file / drag-drop / URL remote
+- [x] 🎨 Theme switcher — Dark / Light / AMOLED / Midnight
+- [x] 🔊 Audio equalizer — 5-band Web Audio API + 4 preset
+- [x] 📡 Stream quality selector — AUTO + per resolusi HLS level
+- [x] 🔍 Virtual scroll — performa ringan dengan 8000+ channel
+- [x] 🌍 Country dropdown — bendera + nama lengkap + search
+- [x] 📂 31 Kategori — tab filter kategori selengkap tv.py
+
+### 💡 Ide Fitur Selanjutnya
+
+- [ ] 🔔 Notifikasi — reminder jadwal acara EPG
+- [ ] 🔗 Share link — bagikan channel yang sedang ditonton
+- [ ] 📊 Statistik — total jam menonton kumulatif
+- [ ] 🎙️ Multi-audio — pilih track audio jika tersedia di stream
+- [ ] 🔲 Multi-view — tonton 2 channel sekaligus (split screen)
 
 ---
 
@@ -472,9 +541,7 @@ git push origin feature/fitur-baru
 ## 📜 Lisensi
 
 ```
-MIT License
-
-Copyright (c) 2026 NusaTV
+MIT License — Copyright (c) 2026 NusaTV
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -483,8 +550,8 @@ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 ```
 
 ---
@@ -495,21 +562,23 @@ copies or substantial portions of the Software.
 |:---|:---|
 | [iptv-org/iptv](https://github.com/iptv-org/iptv) | Koleksi stream publik terbesar di dunia |
 | [iptv-org/api](https://github.com/iptv-org/api) | REST API channels, streams, countries |
-| [video-dev/hls.js](https://github.com/video-dev/hls.js/) | Library HLS streaming di browser |
+| [video-dev/hls.js](https://github.com/video-dev/hls.js/) | Library HLS/M3U8 streaming di browser |
+| [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API) | Equalizer 5-band berbasis browser |
 | [Vercel](https://vercel.com/) | Platform hosting & deployment gratis |
-| [Google Fonts](https://fonts.google.com/) | Syne · Rajdhani · JetBrains Mono |
 | [Shields.io](https://shields.io/) | Badge dinamis untuk README |
-| [Capsule Render](https://github.com/kyechan99/capsule-render) | Animated header banner |
+| [Capsule Render](https://github.com/kyechan99/capsule-render) | Animated header & footer banner |
 
 ---
 
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:7c3aed,50:00d4ff,100:030508&height=140&section=footer&text=Selamat%20Menonton!&fontSize=30&fontColor=ffffff&fontAlignY=65&animation=twinkling" width="100%"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:7c3aed,50:00d4ff,100:030508&height=150&section=footer&text=Selamat%20Menonton!&fontSize=32&fontColor=ffffff&fontAlignY=65&animation=twinkling" width="100%"/>
 
 <br/>
 
 **Dibuat dengan ❤️ untuk penonton Indonesia dan seluruh dunia**
+
+<br/>
 
 [![Open in Browser](https://img.shields.io/badge/▶%20Tonton%20Sekarang-tv--online--indonesia.vercel.app-00d4ff?style=for-the-badge&labelColor=030508)](https://tv-online-indonesia.vercel.app/)
 
