@@ -1,1928 +1,3287 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NusaTV — IPTV Player</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.7/hls.min.js"></script>
-<style>
-:root {
-  --bg-void: #030508;
-  --bg-deep: #07090f;
-  --bg-surface: #0d1117;
-  --bg-elevated: #111827;
-  --bg-card: #161d2e;
-  --bg-hover: #1c2538;
-  --accent-primary: #00d4ff;
-  --accent-secondary: #7c3aed;
-  --accent-hot: #ff3b6b;
-  --accent-warm: #f59e0b;
-  --accent-green: #10b981;
-  --text-primary: #f0f4ff;
-  --text-secondary: #8892a4;
-  --text-muted: #4a5568;
-  --border-subtle: rgba(0, 212, 255, 0.08);
-  --border-glow: rgba(0, 212, 255, 0.3);
-  --shadow-neon: 0 0 20px rgba(0, 212, 255, 0.15), 0 0 60px rgba(0, 212, 255, 0.05);
-  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.6);
-  --font-display: 'Syne', sans-serif;
-  --font-ui: 'Rajdhani', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  --sidebar-w: 320px;
-  --ctrl-h: 72px;
-  --header-h: 52px;
-}
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-html, body {
-  width: 100%; height: 100%;
-  background: var(--bg-void);
-  color: var(--text-primary);
-  font-family: var(--font-ui);
-  overflow: hidden;
-  user-select: none;
-}
-
-body::before {
-  content: '';
-  position: fixed; inset: 0;
-  background:
-    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(0, 212, 255, 0.04) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 90%, rgba(124, 58, 237, 0.05) 0%, transparent 60%);
-  pointer-events: none; z-index: 0;
-}
-
-#app {
-  position: relative; z-index: 1;
-  display: grid;
-  grid-template-rows: var(--header-h) 1fr;
-  grid-template-columns: var(--sidebar-w) 1fr;
-  grid-template-areas: "header header" "sidebar main";
-  width: 100vw; height: 100vh;
-  transition: grid-template-columns 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#app.sidebar-collapsed {
-  grid-template-columns: 0 1fr;
-}
-
-#app.theater-mode {
-  grid-template-columns: 0 1fr;
-  grid-template-rows: 0 1fr;
-}
-
-#header {
-  grid-area: header;
-  display: flex; align-items: center;
-  padding: 0 20px;
-  background: rgba(7, 9, 15, 0.95);
-  border-bottom: 1px solid var(--border-subtle);
-  backdrop-filter: blur(20px);
-  z-index: 100;
-  gap: 16px;
-}
-
-#logo {
-  display: flex; align-items: center; gap: 10px;
-  font-family: var(--font-display);
-  font-size: 20px; font-weight: 800;
-  letter-spacing: -0.5px;
-  color: var(--accent-primary);
-  flex-shrink: 0;
-}
-
-#logo span {
-  color: var(--text-secondary);
-  font-weight: 400;
-  font-size: 11px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  display: block;
-  line-height: 1;
-}
-
-.logo-icon {
-  width: 32px; height: 32px;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 0 16px rgba(0, 212, 255, 0.4);
-}
-
-.logo-icon svg { width: 18px; height: 18px; }
-
-#search-wrap {
-  flex: 1; max-width: 400px;
-  position: relative;
-}
-
-#search-input {
-  width: 100%; padding: 8px 16px 8px 40px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  color: var(--text-primary);
-  font-family: var(--font-ui);
-  font-size: 14px;
-  outline: none;
-  transition: all 0.2s;
-}
-
-#search-input:focus {
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
-  background: var(--bg-card);
-}
-
-#search-input::placeholder { color: var(--text-muted); }
-
-.search-icon {
-  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-  color: var(--text-muted); pointer-events: none;
-}
-
-#header-stats {
-  display: flex; align-items: center; gap: 20px;
-  font-family: var(--font-mono);
-  font-size: 11px; color: var(--text-muted);
-  margin-left: auto;
-}
-
-.stat-item { display: flex; align-items: center; gap: 6px; }
-
-.stat-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--accent-green);
-  animation: pulse-dot 2s infinite;
-}
-
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--accent-green); }
-  50% { opacity: 0.4; box-shadow: none; }
-}
-
-#btn-toggle-sidebar {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-  width: 34px; height: 34px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s; flex-shrink: 0;
-}
-
-#btn-toggle-sidebar:hover {
-  background: var(--bg-hover);
-  color: var(--accent-primary);
-  border-color: var(--border-glow);
-}
-
-#sidebar {
-  grid-area: sidebar;
-  display: flex; flex-direction: column;
-  background: var(--bg-deep);
-  border-right: 1px solid var(--border-subtle);
-  overflow: hidden;
-  z-index: 50;
-}
-
-#category-tabs {
-  display: flex; gap: 4px;
-  padding: 12px 12px 0;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-#category-tabs::-webkit-scrollbar { display: none; }
-
-.cat-tab {
-  padding: 5px 12px;
-  border-radius: 6px;
-  background: transparent;
-  border: 1px solid var(--border-subtle);
-  color: var(--text-muted);
-  font-family: var(--font-ui);
-  font-size: 12px; font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-.cat-tab:hover { color: var(--text-secondary); border-color: rgba(0,212,255,0.2); }
-
-.cat-tab.active {
-  background: rgba(0, 212, 255, 0.1);
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-  box-shadow: 0 0 12px rgba(0,212,255,0.15);
-}
-
-#country-dropdown {
-  margin: 10px 12px 0;
-  width: calc(100% - 24px);
-  position: relative;
-  z-index: 200;
-}
-
-#country-trigger {
-  width: 100%;
-  padding: 8px 12px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  color: var(--text-secondary);
-  font-family: var(--font-ui);
-  font-size: 13px;
-  cursor: pointer;
-  display: flex; align-items: center; gap: 10px;
-  transition: all 0.2s;
-  user-select: none;
-}
-
-#country-trigger:hover,
-#country-trigger.open {
-  border-color: var(--accent-primary);
-  color: var(--text-primary);
-  background: var(--bg-card);
-}
-
-#country-trigger .trigger-flag {
-  font-size: 18px;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-#country-trigger .trigger-label {
-  flex: 1;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  font-weight: 500;
-}
-
-#country-trigger .trigger-arrow {
-  flex-shrink: 0;
-  color: var(--text-muted);
-  transition: transform 0.25s;
-  display: flex;
-}
-
-#country-trigger.open .trigger-arrow {
-  transform: rotate(180deg);
-  color: var(--accent-primary);
-}
-
-#country-panel {
-  position: absolute; top: calc(100% + 6px); left: 0; right: 0;
-  background: var(--bg-card);
-  border: 1px solid var(--border-glow);
-  border-radius: 12px;
-  box-shadow: 0 16px 48px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,212,255,0.05);
-  overflow: hidden;
-  display: none;
-  flex-direction: column;
-  max-height: 320px;
-}
-
-#country-panel.open { display: flex; }
-
-#country-search-wrap {
-  padding: 10px 10px 8px;
-  position: relative;
-  flex-shrink: 0;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-#country-search-input {
-  width: 100%;
-  padding: 7px 10px 7px 34px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  color: var(--text-primary);
-  font-family: var(--font-ui);
-  font-size: 13px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-#country-search-input:focus {
-  border-color: var(--accent-primary);
-}
-
-#country-search-input::placeholder { color: var(--text-muted); }
-
-#country-search-wrap .cs-icon {
-  position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
-  color: var(--text-muted); pointer-events: none;
-}
-
-#country-list {
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--bg-elevated) transparent;
-  flex: 1;
-  padding: 6px;
-}
-
-#country-list::-webkit-scrollbar { width: 4px; }
-#country-list::-webkit-scrollbar-thumb { background: var(--bg-elevated); border-radius: 4px; }
-
-.country-option {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.15s;
-  border: 1px solid transparent;
-}
-
-.country-option:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-subtle);
-}
-
-.country-option.selected {
-  background: rgba(0,212,255,0.08);
-  border-color: rgba(0,212,255,0.2);
-  color: var(--accent-primary);
-}
-
-.country-option .co-flag {
-  font-size: 20px;
-  line-height: 1;
-  flex-shrink: 0;
-  width: 28px; text-align: center;
-}
-
-.country-option .co-name {
-  font-size: 13px; font-weight: 500;
-  color: var(--text-primary);
-  flex: 1;
-}
-
-.country-option.selected .co-name { color: var(--accent-primary); }
-
-.country-option .co-count {
-  font-size: 10px;
-  font-family: var(--font-mono);
-  color: var(--text-muted);
-  background: var(--bg-elevated);
-  padding: 1px 6px; border-radius: 4px;
-}
-
-.country-option .co-check {
-  flex-shrink: 0;
-  opacity: 0;
-  color: var(--accent-primary);
-  transition: opacity 0.15s;
-}
-
-.country-option.selected .co-check { opacity: 1; }
-
-#country-empty {
-  text-align: center;
-  padding: 20px;
-  font-size: 12px;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  display: none;
-}
-
-#country-empty.show { display: block; }
-
-#channel-list-wrap {
-  flex: 1; overflow-y: auto;
-  padding: 10px 8px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--bg-elevated) transparent;
-}
-
-#channel-list-wrap::-webkit-scrollbar { width: 4px; }
-#channel-list-wrap::-webkit-scrollbar-thumb { background: var(--bg-elevated); border-radius: 4px; }
-
-.channel-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 9px 10px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.18s;
-  margin-bottom: 2px;
-  border: 1px solid transparent;
-  position: relative;
-  overflow: hidden;
-}
-
-.channel-item::before {
-  content: '';
-  position: absolute; left: 0; top: 0; bottom: 0;
-  width: 3px;
-  background: var(--accent-primary);
-  transform: scaleY(0);
-  transition: transform 0.2s;
-  border-radius: 0 2px 2px 0;
-}
-
-.channel-item:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-subtle);
-}
-
-.channel-item:hover::before { transform: scaleY(1); }
-
-.channel-item.active {
-  background: rgba(0, 212, 255, 0.08);
-  border-color: rgba(0, 212, 255, 0.2);
-}
-
-.channel-item.active::before { transform: scaleY(1); }
-
-.ch-logo {
-  width: 40px; height: 40px;
-  border-radius: 8px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  object-fit: contain;
-  flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  overflow: hidden;
-}
-
-.ch-logo img {
-  width: 100%; height: 100%;
-  object-fit: contain;
-}
-
-.ch-logo-placeholder {
-  font-family: var(--font-display);
-  font-size: 12px; font-weight: 700;
-  color: var(--accent-primary);
-  text-transform: uppercase;
-}
-
-.ch-info { flex: 1; min-width: 0; }
-
-.ch-name {
-  font-size: 13px; font-weight: 600;
-  color: var(--text-primary);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  line-height: 1.3;
-}
-
-.ch-meta {
-  font-size: 10px; color: var(--text-muted);
-  font-family: var(--font-mono);
-  margin-top: 2px;
-  display: flex; align-items: center; gap: 6px;
-}
-
-.ch-badge {
-  font-size: 9px; padding: 1px 6px;
-  border-radius: 3px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-.badge-live {
-  background: rgba(255, 59, 107, 0.15);
-  color: var(--accent-hot);
-  border: 1px solid rgba(255, 59, 107, 0.3);
-}
-
-.badge-hd {
-  background: rgba(0, 212, 255, 0.1);
-  color: var(--accent-primary);
-  border: 1px solid rgba(0, 212, 255, 0.2);
-}
-
-.ch-loading-indicator {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: 12px;
-}
-
-.spinner {
-  width: 28px; height: 28px;
-  border: 2px solid var(--border-subtle);
-  border-top-color: var(--accent-primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin: 0 auto 12px;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
-
-#main {
-  grid-area: main;
-  display: flex; flex-direction: column;
-  background: var(--bg-void);
-  overflow: hidden;
-  position: relative;
-}
-
-#video-wrapper {
-  flex: 1;
-  display: flex; align-items: center; justify-content: center;
-  position: relative;
-  overflow: hidden;
-  background: #000;
-  cursor: none;
-}
-
-#video-wrapper:hover { cursor: default; }
-
-#main-video {
-  width: 100%; height: 100%;
-  object-fit: contain;
-  transform-origin: center center;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  display: block;
-}
-
-#video-overlay {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  pointer-events: none;
-}
-
-#loading-overlay {
-  position: absolute; inset: 0;
-  background: rgba(3, 5, 8, 0.85);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 16px;
-  z-index: 20;
-  backdrop-filter: blur(4px);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s;
-}
-
-#loading-overlay.visible { opacity: 1; pointer-events: all; }
-
-.loading-ring {
-  width: 60px; height: 60px;
-  border: 3px solid rgba(0,212,255,0.1);
-  border-top-color: var(--accent-primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-.loading-text {
-  font-family: var(--font-mono);
-  font-size: 12px; color: var(--accent-primary);
-  letter-spacing: 2px;
-}
-
-#no-stream-overlay {
-  position: absolute; inset: 0;
-  background: var(--bg-void);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 20px; z-index: 10;
-}
-
-.no-stream-icon {
-  width: 80px; height: 80px;
-  border: 2px solid var(--border-subtle);
-  border-radius: 16px;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--text-muted);
-  background: var(--bg-surface);
-}
-
-.no-stream-title {
-  font-family: var(--font-display);
-  font-size: 22px; font-weight: 700;
-  color: var(--text-secondary);
-}
-
-.no-stream-sub {
-  font-size: 13px; color: var(--text-muted);
-  text-align: center; max-width: 280px; line-height: 1.6;
-}
-
-#channel-info-bar {
-  position: absolute; top: 0; left: 0; right: 0;
-  padding: 16px 20px;
-  background: linear-gradient(to bottom, rgba(3,5,8,0.95) 0%, transparent 100%);
-  display: flex; align-items: flex-start;
-  gap: 14px;
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.3s;
-  z-index: 15;
-}
-
-#video-wrapper:hover #channel-info-bar,
-#channel-info-bar.pinned { opacity: 1; pointer-events: all; }
-
-.info-logo-wrap {
-  width: 48px; height: 48px;
-  border-radius: 10px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  overflow: hidden;
-  flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-}
-
-.info-logo-wrap img { width: 100%; height: 100%; object-fit: contain; }
-
-.info-text .info-name {
-  font-family: var(--font-display);
-  font-size: 17px; font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.2;
-}
-
-.info-text .info-sub {
-  font-size: 11px; color: var(--text-muted);
-  font-family: var(--font-mono);
-  margin-top: 4px;
-  display: flex; align-items: center; gap: 8px;
-}
-
-.live-badge {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 2px 8px;
-  background: var(--accent-hot);
-  border-radius: 4px;
-  font-size: 9px; font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: white;
-}
-
-.live-badge::before {
-  content: '';
-  width: 5px; height: 5px;
-  border-radius: 50%; background: white;
-  animation: pulse-dot 1.5s infinite;
-}
-
-#controls-bar {
-  height: var(--ctrl-h);
-  background: rgba(7, 9, 15, 0.98);
-  border-top: 1px solid var(--border-subtle);
-  display: flex; align-items: center;
-  padding: 0 16px;
-  gap: 10px;
-  flex-shrink: 0;
-  backdrop-filter: blur(20px);
-  position: relative;
-  z-index: 30;
-}
-
-#progress-track {
-  position: absolute; top: 0; left: 0; right: 0;
-  height: 3px;
-  background: var(--bg-elevated);
-  cursor: pointer;
-  transition: height 0.2s;
-}
-
-#progress-track:hover { height: 5px; }
-
-#progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
-  width: 0%;
-  transition: width 0.5s linear;
-  position: relative;
-}
-
-#progress-fill::after {
-  content: '';
-  position: absolute; right: -4px; top: 50%; transform: translateY(-50%);
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  background: var(--accent-primary);
-  box-shadow: 0 0 10px var(--accent-primary);
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-#progress-track:hover #progress-fill::after { opacity: 1; }
-
-.ctrl-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  width: 38px; height: 38px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.18s;
-  flex-shrink: 0;
-  position: relative;
-}
-
-.ctrl-btn:hover {
-  background: var(--bg-elevated);
-  color: var(--text-primary);
-}
-
-.ctrl-btn.active { color: var(--accent-primary); }
-
-.ctrl-btn svg { width: 18px; height: 18px; }
-
-.ctrl-btn.large svg { width: 22px; height: 22px; }
-
-.ctrl-btn.primary {
-  background: var(--accent-primary);
-  color: var(--bg-void);
-  width: 44px; height: 44px;
-  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
-}
-
-.ctrl-btn.primary:hover {
-  background: var(--text-primary);
-  box-shadow: 0 0 28px rgba(0, 212, 255, 0.5);
-  transform: scale(1.05);
-}
-
-.ctrl-divider {
-  width: 1px; height: 24px;
-  background: var(--border-subtle);
-  flex-shrink: 0;
-}
-
-#volume-group {
-  display: flex; align-items: center; gap: 8px;
-  flex-shrink: 0;
-}
-
-#volume-slider {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 90px; height: 4px;
-  border-radius: 4px;
-  background: var(--bg-elevated);
-  outline: none;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-#volume-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 14px; height: 14px;
-  border-radius: 50%;
-  background: var(--accent-primary);
-  cursor: pointer;
-  box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
-  transition: transform 0.2s;
-}
-
-#volume-slider:hover::-webkit-slider-thumb { transform: scale(1.2); }
-
-#volume-display {
-  font-family: var(--font-mono);
-  font-size: 11px; color: var(--text-muted);
-  width: 28px; text-align: right;
-}
-
-#zoom-group {
-  display: flex; align-items: center; gap: 6px;
-}
-
-#zoom-display {
-  font-family: var(--font-mono);
-  font-size: 11px; color: var(--accent-primary);
-  background: rgba(0,212,255,0.08);
-  padding: 3px 8px; border-radius: 4px;
-  border: 1px solid rgba(0,212,255,0.15);
-  min-width: 44px; text-align: center;
-}
-
-#time-display {
-  font-family: var(--font-mono);
-  font-size: 12px; color: var(--text-muted);
-  margin-left: auto;
-  white-space: nowrap;
-}
-
-.quality-menu {
-  position: absolute; bottom: calc(100% + 10px); right: 0;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  padding: 6px;
-  min-width: 120px;
-  display: none;
-  z-index: 200;
-  box-shadow: var(--shadow-card);
-}
-
-.quality-menu.open { display: block; }
-
-.quality-option {
-  padding: 7px 12px;
-  border-radius: 6px;
-  font-size: 12px; font-weight: 600;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.15s;
-  display: flex; align-items: center; justify-content: space-between;
-}
-
-.quality-option:hover { background: var(--bg-hover); color: var(--text-primary); }
-
-.quality-option.selected { color: var(--accent-primary); }
-
-#toast-container {
-  position: fixed; top: 70px; right: 20px;
-  z-index: 9999;
-  display: flex; flex-direction: column; gap: 10px;
-  pointer-events: none;
-}
-
-.toast {
-  padding: 10px 16px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  font-size: 13px; color: var(--text-primary);
-  font-family: var(--font-ui);
-  box-shadow: var(--shadow-card);
-  display: flex; align-items: center; gap: 10px;
-  transform: translateX(120%);
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-  max-width: 280px;
-}
-
-.toast.show { transform: translateX(0); }
-
-.toast-icon { flex-shrink: 0; }
-
-#pip-indicator {
-  position: fixed; bottom: 90px; right: 20px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--accent-primary);
-  border-radius: 10px;
-  padding: 8px 14px;
-  font-size: 12px; color: var(--accent-primary);
-  font-family: var(--font-mono);
-  box-shadow: 0 0 20px rgba(0,212,255,0.2);
-  display: none;
-  z-index: 500;
-}
-
-#keyboard-hints {
-  position: absolute; bottom: 90px; left: 50%; transform: translateX(-50%);
-  display: flex; gap: 12px;
-  flex-wrap: wrap; justify-content: center;
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.3s;
-}
-
-#keyboard-hints.show { opacity: 1; }
-
-.hint-key {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 11px; color: var(--text-muted);
-  font-family: var(--font-mono);
-}
-
-.key-badge {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 10px; color: var(--text-secondary);
-}
-
-#zoom-overlay {
-  position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
-  background: rgba(0,212,255,0.15);
-  border: 1px solid rgba(0,212,255,0.3);
-  border-radius: 8px;
-  padding: 6px 14px;
-  font-family: var(--font-mono);
-  font-size: 13px; color: var(--accent-primary);
-  pointer-events: none;
-  opacity: 0; transition: opacity 0.3s;
-  z-index: 25;
-}
-
-#zoom-overlay.visible { opacity: 1; }
-
-.sidebar-header {
-  padding: 12px 16px 6px;
-  display: flex; align-items: center; justify-content: space-between;
-}
-
-.sidebar-title {
-  font-size: 10px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 2px;
-  color: var(--text-muted);
-}
-
-#channel-count {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  background: rgba(0,212,255,0.08);
-  color: var(--accent-primary);
-  padding: 2px 8px; border-radius: 4px;
-}
-
-.error-state {
-  padding: 20px;
-  text-align: center;
-  color: var(--accent-hot);
-  font-size: 12px;
-  font-family: var(--font-mono);
-}
-
-#hover-controls {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  padding: 60px 20px 20px;
-  background: linear-gradient(to top, rgba(3,5,8,0.9) 0%, transparent 100%);
-  display: flex; align-items: center;
-  gap: 10px;
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.3s;
-  z-index: 15;
-}
-
-#video-wrapper:hover #hover-controls { opacity: 1; pointer-events: all; }
-
-.hover-btn {
-  background: rgba(7,9,15,0.8);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: var(--text-primary);
-  width: 40px; height: 40px;
-  border-radius: 10px;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s;
-  backdrop-filter: blur(10px);
-}
-
-.hover-btn:hover {
-  background: rgba(0,212,255,0.15);
-  border-color: rgba(0,212,255,0.4);
-  color: var(--accent-primary);
-  transform: scale(1.05);
-}
-
-.hover-btn svg { width: 16px; height: 16px; }
-
-#center-play-btn {
-  position: absolute;
-  background: rgba(0,212,255,0.15);
-  border: 2px solid var(--accent-primary);
-  color: var(--accent-primary);
-  width: 70px; height: 70px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  backdrop-filter: blur(16px);
-  box-shadow: 0 0 40px rgba(0,212,255,0.3);
-  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-  z-index: 16;
-  opacity: 0; pointer-events: none;
-}
-
-#center-play-btn:hover {
-  background: rgba(0,212,255,0.25);
-  transform: scale(1.1);
-}
-
-#center-play-btn.visible { opacity: 1; pointer-events: all; }
-
-#center-play-btn svg { width: 28px; height: 28px; }
-
-.panel-btn {
-  position: relative;
-}
-
-.tooltip {
-  position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-primary);
-  font-size: 11px; white-space: nowrap;
-  padding: 4px 8px; border-radius: 5px;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.15s;
-  font-family: var(--font-ui);
-}
-
-.ctrl-btn:hover .tooltip,
-.hover-btn:hover .tooltip { opacity: 1; }
-</style>
-</head>
-<body>
-<div id="app">
-  <header id="header">
-    <div id="logo">
-      <div class="logo-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
-          <path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/>
-          <polygon points="10,8 16,12 10,16" fill="white" stroke="none"/>
-        </svg>
-      </div>
-      <div>
-        NusaTV
-        <span>IPTV Stream</span>
-      </div>
-    </div>
-    <div id="search-wrap">
-      <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-      </svg>
-      <input id="search-input" type="text" placeholder="Cari channel...">
-    </div>
-    <div id="header-stats">
-      <div class="stat-item">
-        <div class="stat-dot"></div>
-        <span id="stat-channels">— CH</span>
-      </div>
-      <div class="stat-item">
-        <span id="stat-streams">— Streams</span>
-      </div>
-    </div>
-    <button id="btn-toggle-sidebar" title="Toggle Sidebar">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-        <line x1="9" y1="3" x2="9" y2="21"/>
-      </svg>
-    </button>
-  </header>
-
-  <aside id="sidebar">
-    <div id="category-tabs">
-      <button class="cat-tab active" data-cat="all">Semua</button>
-      <button class="cat-tab" data-cat="general">General</button>
-      <button class="cat-tab" data-cat="news">Berita</button>
-      <button class="cat-tab" data-cat="sports">Olahraga</button>
-      <button class="cat-tab" data-cat="movies">Film</button>
-      <button class="cat-tab" data-cat="music">Musik</button>
-      <button class="cat-tab" data-cat="kids">Anak</button>
-      <button class="cat-tab" data-cat="entertainment">Hiburan</button>
-    </div>
-
-    <div id="country-dropdown">
-      <div id="country-trigger">
-        <span class="trigger-flag">🌍</span>
-        <span class="trigger-label">Semua Negara</span>
-        <span class="trigger-arrow">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <polyline points="6 9 12 15 18 9"/>
-          </svg>
-        </span>
-      </div>
-      <div id="country-panel">
-        <div id="country-search-wrap">
-          <svg class="cs-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-          </svg>
-          <input id="country-search-input" type="text" placeholder="Cari negara...">
+<!doctype html>
+<html lang="id" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NusaTV — IPTV Player</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.7/hls.min.js"></script>
+    <style>
+      :root {
+        --c-bg0: #030508;
+        --c-bg1: #07090f;
+        --c-bg2: #0d1117;
+        --c-bg3: #111827;
+        --c-bg4: #161d2e;
+        --c-bg5: #1c2538;
+        --c-acc: #00d4ff;
+        --c-sec: #7c3aed;
+        --c-hot: #ff3b6b;
+        --c-warn: #f59e0b;
+        --c-ok: #10b981;
+        --c-t1: #f0f4ff;
+        --c-t2: #8892a4;
+        --c-t3: #4a5568;
+        --c-bd: rgba(0, 212, 255, 0.08);
+        --c-bdg: rgba(0, 212, 255, 0.3);
+        --sidebar: 300px;
+        --hdr: 50px;
+        --ctrl: 68px;
+        --f-ui: system-ui, -apple-system, sans-serif;
+        --f-mono: "JetBrains Mono", monospace;
+      }
+      [data-theme="light"] {
+        --c-bg0: #f1f5f9;
+        --c-bg1: #e8edf5;
+        --c-bg2: #dde3ee;
+        --c-bg3: #d0d8e8;
+        --c-bg4: #c4cedf;
+        --c-bg5: #b8c2d6;
+        --c-t1: #0f172a;
+        --c-t2: #334155;
+        --c-t3: #64748b;
+        --c-bd: rgba(0, 180, 220, 0.15);
+        --c-bdg: rgba(0, 180, 220, 0.4);
+      }
+      [data-theme="amoled"] {
+        --c-bg0: #000;
+        --c-bg1: #000;
+        --c-bg2: #050505;
+        --c-bg3: #0a0a0a;
+        --c-bg4: #0f0f0f;
+        --c-bg5: #141414;
+      }
+      [data-theme="midnight"] {
+        --c-bg0: #01050f;
+        --c-bg1: #020a1a;
+        --c-bg2: #051224;
+        --c-bg3: #081b35;
+        --c-bg4: #0b2244;
+        --c-bg5: #0f2a52;
+        --c-acc: #4da6ff;
+        --c-bdg: rgba(77, 166, 255, 0.4);
+        --c-bd: rgba(77, 166, 255, 0.1);
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        background: var(--c-bg0);
+        color: var(--c-t1);
+        font-family: var(--f-ui);
+        overflow: hidden;
+        user-select: none;
+      }
+      #app {
+        display: grid;
+        grid-template-rows: var(--hdr) 1fr;
+        grid-template-columns: var(--sidebar) 1fr;
+        grid-template-areas: "hdr hdr" "sb main";
+        width: 100vw;
+        height: 100vh;
+        transition: grid-template-columns 0.3s ease;
+      }
+      #app.sb-off {
+        grid-template-columns: 0 1fr;
+      }
+      #app.theater {
+        grid-template-columns: 0 1fr;
+        grid-template-rows: 0 1fr;
+      }
+      #hdr {
+        grid-area: hdr;
+        display: flex;
+        align-items: center;
+        padding: 0 14px;
+        background: var(--c-bg1);
+        border-bottom: 1px solid var(--c-bd);
+        z-index: 100;
+        gap: 10px;
+        contain: layout style;
+      }
+      #logo {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--c-acc);
+        flex-shrink: 0;
+        letter-spacing: -0.5px;
+      }
+      .logo-box {
+        width: 30px;
+        height: 30px;
+        background: linear-gradient(135deg, var(--c-acc), var(--c-sec));
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .logo-box svg {
+        width: 16px;
+        height: 16px;
+      }
+      #search-wrap {
+        flex: 1;
+        max-width: 380px;
+        position: relative;
+      }
+      #search-input {
+        width: 100%;
+        padding: 7px 14px 7px 36px;
+        background: var(--c-bg3);
+        border: 1px solid var(--c-bd);
+        border-radius: 8px;
+        color: var(--c-t1);
+        font-family: var(--f-ui);
+        font-size: 13px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      #search-input:focus {
+        border-color: var(--c-acc);
+      }
+      #search-input::placeholder {
+        color: var(--c-t3);
+      }
+      .s-icon {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--c-t3);
+        pointer-events: none;
+      }
+      #hdr-right {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: auto;
+      }
+      .hbtn {
+        background: var(--c-bg3);
+        border: 1px solid var(--c-bd);
+        color: var(--c-t2);
+        width: 32px;
+        height: 32px;
+        border-radius: 7px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+        position: relative;
+        flex-shrink: 0;
+      }
+      .hbtn:hover,
+      .hbtn.on {
+        background: var(--c-bg5);
+        color: var(--c-acc);
+        border-color: var(--c-bdg);
+      }
+      .hbtn svg {
+        width: 15px;
+        height: 15px;
+      }
+      .hbtn .tt {
+        position: absolute;
+        bottom: calc(100% + 6px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--c-bg3);
+        border: 1px solid var(--c-bd);
+        color: var(--c-t1);
+        font-size: 11px;
+        white-space: nowrap;
+        padding: 3px 7px;
+        border-radius: 5px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.15s;
+        z-index: 999;
+      }
+      .hbtn:hover .tt {
+        opacity: 1;
+      }
+      #stat {
+        font-size: 11px;
+        color: var(--c-t3);
+        font-family: var(--f-mono);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+      }
+      .dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--c-ok);
+        animation: blink 2s infinite;
+      }
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+      #sb {
+        grid-area: sb;
+        display: flex;
+        flex-direction: column;
+        background: var(--c-bg1);
+        border-right: 1px solid var(--c-bd);
+        overflow: hidden;
+        contain: layout style;
+      }
+      #tab-bar {
+        display: flex;
+        gap: 3px;
+        padding: 10px 10px 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+        flex-shrink: 0;
+      }
+      #tab-bar::-webkit-scrollbar {
+        display: none;
+      }
+      .tab {
+        padding: 4px 10px;
+        border-radius: 5px;
+        background: transparent;
+        border: 1px solid var(--c-bd);
+        color: var(--c-t3);
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.15s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .tab:hover {
+        color: var(--c-t2);
+      }
+      .tab.on {
+        background: rgba(0, 212, 255, 0.1);
+        border-color: var(--c-acc);
+        color: var(--c-acc);
+      }
+      #ctr-wrap {
+        margin: 8px 10px 0;
+        position: relative;
+        z-index: 200;
+        flex-shrink: 0;
+      }
+      #ctr-btn {
+        width: 100%;
+        padding: 7px 11px;
+        background: var(--c-bg3);
+        border: 1px solid var(--c-bd);
+        border-radius: 9px;
+        color: var(--c-t2);
+        font-family: var(--f-ui);
+        font-size: 13px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.18s;
+      }
+      #ctr-btn:hover,
+      #ctr-btn.on {
+        border-color: var(--c-acc);
+        background: var(--c-bg4);
+        color: var(--c-t1);
+      }
+      #ctr-btn .flag {
+        font-size: 17px;
+        line-height: 1;
+        flex-shrink: 0;
+      }
+      #ctr-btn .lbl {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-weight: 500;
+      }
+      #ctr-btn .arr {
+        color: var(--c-t3);
+        transition: transform 0.2s;
+        display: flex;
+      }
+      #ctr-btn.on .arr {
+        transform: rotate(180deg);
+        color: var(--c-acc);
+      }
+      #ctr-panel {
+        position: absolute;
+        top: calc(100% + 5px);
+        left: 0;
+        right: 0;
+        background: var(--c-bg4);
+        border: 1px solid var(--c-bdg);
+        border-radius: 11px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+        overflow: hidden;
+        display: none;
+        flex-direction: column;
+        max-height: 300px;
+      }
+      #ctr-panel.on {
+        display: flex;
+      }
+      #csp {
+        padding: 8px 8px 6px;
+        position: relative;
+        flex-shrink: 0;
+        border-bottom: 1px solid var(--c-bd);
+      }
+      #csi {
+        width: 100%;
+        padding: 6px 9px 6px 30px;
+        background: var(--c-bg3);
+        border: 1px solid var(--c-bd);
+        border-radius: 7px;
+        color: var(--c-t1);
+        font-size: 12px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      #csi:focus {
+        border-color: var(--c-acc);
+      }
+      #csi::placeholder {
+        color: var(--c-t3);
+      }
+      .csp-ic {
+        position: absolute;
+        left: 17px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--c-t3);
+        pointer-events: none;
+      }
+      #ctr-list {
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--c-bg3) transparent;
+        flex: 1;
+        padding: 5px;
+      }
+      #ctr-list::-webkit-scrollbar {
+        width: 3px;
+      }
+      #ctr-list::-webkit-scrollbar-thumb {
+        background: var(--c-bg3);
+        border-radius: 3px;
+      }
+      .ctr-opt {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 9px;
+        border-radius: 7px;
+        cursor: pointer;
+        transition: all 0.12s;
+        border: 1px solid transparent;
+      }
+      .ctr-opt:hover {
+        background: var(--c-bg5);
+        border-color: var(--c-bd);
+      }
+      .ctr-opt.on {
+        background: rgba(0, 212, 255, 0.08);
+        border-color: rgba(0, 212, 255, 0.2);
+      }
+      .ctr-opt .cf {
+        font-size: 19px;
+        line-height: 1;
+        width: 26px;
+        text-align: center;
+        flex-shrink: 0;
+      }
+      .ctr-opt .cn {
+        font-size: 12px;
+        font-weight: 500;
+        flex: 1;
+        color: var(--c-t1);
+      }
+      .ctr-opt.on .cn {
+        color: var(--c-acc);
+      }
+      .ctr-opt .cc {
+        font-size: 10px;
+        font-family: var(--f-mono);
+        color: var(--c-t3);
+        background: var(--c-bg3);
+        padding: 1px 5px;
+        border-radius: 3px;
+      }
+      .ctr-opt .ck {
+        flex-shrink: 0;
+        opacity: 0;
+        color: var(--c-acc);
+        transition: opacity 0.12s;
+      }
+      .ctr-opt.on .ck {
+        opacity: 1;
+      }
+      #ctr-empty {
+        text-align: center;
+        padding: 16px;
+        font-size: 11px;
+        color: var(--c-t3);
+        font-family: var(--f-mono);
+        display: none;
+      }
+      #ctr-empty.on {
+        display: block;
+      }
+      #sb-hdr {
+        padding: 8px 12px 4px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+      }
+      .sb-title {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--c-t3);
+      }
+      #ch-count {
+        font-size: 10px;
+        font-family: var(--f-mono);
+        background: rgba(0, 212, 255, 0.08);
+        color: var(--c-acc);
+        padding: 1px 7px;
+        border-radius: 3px;
+      }
+      #ch-list-wrap {
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+      }
+      #ch-list-viewport {
+        width: 100%;
+        height: 100%;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--c-bg3) transparent;
+        padding: 4px 6px;
+      }
+      #ch-list-viewport::-webkit-scrollbar {
+        width: 3px;
+      }
+      #ch-list-viewport::-webkit-scrollbar-thumb {
+        background: var(--c-bg3);
+        border-radius: 3px;
+      }
+      #ch-list-spacer {
+        position: relative;
+      }
+      .ch-item {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 8px 9px;
+        border-radius: 9px;
+        cursor: pointer;
+        transition:
+          background 0.12s,
+          border 0.12s;
+        margin-bottom: 2px;
+        border: 1px solid transparent;
+        position: absolute;
+        left: 0;
+        right: 0;
+      }
+      .ch-item:hover {
+        background: var(--c-bg5);
+        border-color: var(--c-bd);
+      }
+      .ch-item.on {
+        background: rgba(0, 212, 255, 0.08);
+        border-color: rgba(0, 212, 255, 0.2);
+      }
+      .ch-item::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--c-acc);
+        transform: scaleY(0);
+        transition: transform 0.15s;
+        border-radius: 0 2px 2px 0;
+      }
+      .ch-item.on::before,
+      .ch-item:hover::before {
+        transform: scaleY(1);
+      }
+      .ch-logo {
+        width: 38px;
+        height: 38px;
+        border-radius: 7px;
+        background: var(--c-bg3);
+        border: 1px solid var(--c-bd);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .ch-logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      .ch-logo .ini {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--c-acc);
+        text-transform: uppercase;
+      }
+      .ch-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .ch-name {
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.3;
+      }
+      .ch-meta {
+        font-size: 10px;
+        color: var(--c-t3);
+        font-family: var(--f-mono);
+        margin-top: 1px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .ch-star {
+        flex-shrink: 0;
+        color: var(--c-t3);
+        cursor: pointer;
+        transition: color 0.15s;
+        padding: 2px;
+      }
+      .ch-star.on {
+        color: var(--c-warn);
+      }
+      .badge {
+        font-size: 9px;
+        padding: 1px 5px;
+        border-radius: 3px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+      }
+      .b-live {
+        background: rgba(255, 59, 107, 0.15);
+        color: var(--c-hot);
+        border: 1px solid rgba(255, 59, 107, 0.3);
+      }
+      .b-hd {
+        background: rgba(0, 212, 255, 0.1);
+        color: var(--c-acc);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+      }
+      #ch-spinner {
+        text-align: center;
+        padding: 36px 16px;
+        color: var(--c-t3);
+        font-size: 11px;
+        font-family: var(--f-mono);
+      }
+      .spin {
+        width: 24px;
+        height: 24px;
+        border: 2px solid var(--c-bd);
+        border-top-color: var(--c-acc);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        margin: 0 auto 10px;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      #main {
+        grid-area: main;
+        display: flex;
+        flex-direction: column;
+        background: #000;
+        overflow: hidden;
+        position: relative;
+      }
+      #vwrap {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        background: #000;
+        cursor: crosshair;
+      }
+      #vid {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+      }
+      #no-stream {
+        position: absolute;
+        inset: 0;
+        background: var(--c-bg0);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        z-index: 10;
+      }
+      .ns-icon {
+        width: 70px;
+        height: 70px;
+        border: 1.5px solid var(--c-bd);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--c-t3);
+        background: var(--c-bg2);
+      }
+      #load-ov {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        z-index: 20;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s;
+      }
+      #load-ov.on {
+        opacity: 1;
+        pointer-events: all;
+      }
+      .ld-ring {
+        width: 52px;
+        height: 52px;
+        border: 2.5px solid rgba(0, 212, 255, 0.15);
+        border-top-color: var(--c-acc);
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+      }
+      .ld-txt {
+        font-size: 11px;
+        color: var(--c-acc);
+        letter-spacing: 2px;
+        font-family: var(--f-mono);
+      }
+      #ch-info-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: 12px 16px;
+        background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s;
+        z-index: 15;
+      }
+      #vwrap:hover #ch-info-bar {
+        opacity: 1;
+        pointer-events: all;
+      }
+      .info-logo {
+        width: 44px;
+        height: 44px;
+        border-radius: 9px;
+        background: var(--c-bg3);
+        border: 1px solid var(--c-bd);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .info-logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      #info-name {
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.2;
+      }
+      #info-sub {
+        font-size: 10px;
+        color: var(--c-t3);
+        font-family: var(--f-mono);
+        margin-top: 3px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .live-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        padding: 1px 7px;
+        background: var(--c-hot);
+        border-radius: 4px;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: #fff;
+      }
+      .live-pill::before {
+        content: "";
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: #fff;
+        animation: blink 1.5s infinite;
+      }
+      #zoom-ov {
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 212, 255, 0.15);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 7px;
+        padding: 5px 12px;
+        font-family: var(--f-mono);
+        font-size: 12px;
+        color: var(--c-acc);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.25s;
+        z-index: 25;
+      }
+      #zoom-ov.on {
+        opacity: 1;
+      }
+      #hov-ctrl {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 50px 16px 16px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, transparent 100%);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s;
+        z-index: 15;
+      }
+      #vwrap:hover #hov-ctrl {
+        opacity: 1;
+        pointer-events: all;
+      }
+      .hv-btn {
+        background: rgba(0, 0, 0, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--c-t1);
+        width: 36px;
+        height: 36px;
+        border-radius: 9px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+        position: relative;
+      }
+      .hv-btn:hover {
+        background: rgba(0, 212, 255, 0.2);
+        border-color: rgba(0, 212, 255, 0.4);
+        color: var(--c-acc);
+      }
+      .hv-btn svg {
+        width: 15px;
+        height: 15px;
+      }
+      .hv-btn .tt {
+        position: absolute;
+        bottom: calc(100% + 6px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--c-bg3);
+        border: 1px solid var(--c-bd);
+        color: var(--c-t1);
+        font-size: 10px;
+        white-space: nowrap;
+        padding: 2px 6px;
+        border-radius: 4px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.12s;
+      }
+      .hv-btn:hover .tt {
+        opacity: 1;
+      }
+      #center-btn {
+        position: absolute;
+        background: rgba(0, 212, 255, 0.15);
+        border: 2px solid var(--c-acc);
+        color: var(--c-acc);
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        z-index: 16;
+        opacity: 0;
+        pointer-events: none;
+      }
+      #center-btn:hover {
+        background: rgba(0, 212, 255, 0.25);
+        transform: scale(1.08);
+      }
+      #center-btn.on {
+        opacity: 1;
+        pointer-events: all;
+      }
+      #center-btn svg {
+        width: 26px;
+        height: 26px;
+      }
+      #ctrl-bar {
+        height: var(--ctrl);
+        background: var(--c-bg1);
+        border-top: 1px solid var(--c-bd);
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        gap: 8px;
+        flex-shrink: 0;
+        position: relative;
+        z-index: 30;
+      }
+      #prog {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--c-bg3);
+        cursor: pointer;
+        transition: height 0.15s;
+      }
+      #prog:hover {
+        height: 5px;
+      }
+      #prog-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--c-acc), var(--c-sec));
+        width: 0%;
+        transition: width 0.5s linear;
+        position: relative;
+      }
+      #prog-fill::after {
+        content: "";
+        position: absolute;
+        right: -4px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--c-acc);
+        opacity: 0;
+        transition: opacity 0.15s;
+      }
+      #prog:hover #prog-fill::after {
+        opacity: 1;
+      }
+      .cbtn {
+        background: transparent;
+        border: none;
+        color: var(--c-t2);
+        width: 34px;
+        height: 34px;
+        border-radius: 7px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+        flex-shrink: 0;
+        position: relative;
+      }
+      .cbtn:hover {
+        background: var(--c-bg3);
+        color: var(--c-t1);
+      }
+      .cbtn.on {
+        color: var(--c-acc);
+      }
+      .cbtn svg {
+        width: 16px;
+        height: 16px;
+      }
+      .cbtn.lg svg {
+        width: 20px;
+        height: 20px;
+      }
+      .cbtn.prim {
+        background: var(--c-acc);
+        color: var(--c-bg0);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+      }
+      .cbtn.prim:hover {
+        background: var(--c-t1);
+        transform: scale(1.05);
+      }
+      .cbtn .tt {
+        position: absolute;
+        bottom: calc(100% + 6px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--c-bg3);
+        border: 1px solid var(--c-bd);
+        color: var(--c-t1);
+        font-size: 10px;
+        white-space: nowrap;
+        padding: 2px 6px;
+        border-radius: 4px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.12s;
+        z-index: 99;
+      }
+      .cbtn:hover .tt {
+        opacity: 1;
+      }
+      .div {
+        width: 1px;
+        height: 20px;
+        background: var(--c-bd);
+        flex-shrink: 0;
+      }
+      #vol-grp {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+      #vol-sl {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 80px;
+        height: 3px;
+        border-radius: 3px;
+        background: var(--c-bg3);
+        outline: none;
+        cursor: pointer;
+      }
+      #vol-sl::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 13px;
+        height: 13px;
+        border-radius: 50%;
+        background: var(--c-acc);
+        cursor: pointer;
+        transition: transform 0.15s;
+      }
+      #vol-sl:hover::-webkit-slider-thumb {
+        transform: scale(1.2);
+      }
+      #vol-val {
+        font-family: var(--f-mono);
+        font-size: 10px;
+        color: var(--c-t3);
+        width: 26px;
+        text-align: right;
+      }
+      #zoom-grp {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      #zoom-val {
+        font-family: var(--f-mono);
+        font-size: 10px;
+        color: var(--c-acc);
+        background: rgba(0, 212, 255, 0.08);
+        padding: 2px 7px;
+        border-radius: 4px;
+        border: 1px solid rgba(0, 212, 255, 0.15);
+        min-width: 42px;
+        text-align: center;
+      }
+      #ql-wrap {
+        position: relative;
+        flex-shrink: 0;
+      }
+      #ql-btn {
+        font-family: var(--f-mono);
+        font-size: 10px;
+        color: var(--c-acc);
+        background: rgba(0, 212, 255, 0.08);
+        padding: 4px 9px;
+        border-radius: 5px;
+        border: 1px solid rgba(0, 212, 255, 0.15);
+        cursor: pointer;
+        transition: all 0.15s;
+        white-space: nowrap;
+      }
+      #ql-btn:hover {
+        background: rgba(0, 212, 255, 0.15);
+      }
+      #ql-menu {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--c-bg3);
+        border: 1px solid var(--c-bd);
+        border-radius: 9px;
+        padding: 5px;
+        min-width: 110px;
+        display: none;
+        z-index: 200;
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+      }
+      #ql-menu.on {
+        display: block;
+      }
+      .ql-opt {
+        padding: 6px 11px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--c-t2);
+        cursor: pointer;
+        transition: all 0.12s;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+      }
+      .ql-opt:hover {
+        background: var(--c-bg5);
+        color: var(--c-t1);
+      }
+      .ql-opt.on {
+        color: var(--c-acc);
+      }
+      #time-disp {
+        font-family: var(--f-mono);
+        font-size: 11px;
+        color: var(--c-t3);
+        margin-left: auto;
+        white-space: nowrap;
+      }
+      #toast-wrap {
+        position: fixed;
+        top: 60px;
+        right: 16px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        pointer-events: none;
+      }
+      .toast {
+        padding: 9px 14px;
+        background: var(--c-bg3);
+        border: 1px solid var(--c-bd);
+        border-radius: 9px;
+        font-size: 12px;
+        color: var(--c-t1);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        transform: translateX(130%);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        max-width: 260px;
+      }
+      .toast.on {
+        transform: translateX(0);
+      }
+      .modal-bg {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+      }
+      .modal-bg.on {
+        opacity: 1;
+        pointer-events: all;
+      }
+      .modal {
+        background: var(--c-bg2);
+        border: 1px solid var(--c-bd);
+        border-radius: 14px;
+        width: 100%;
+        max-width: 480px;
+        max-height: 90vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transform: translateY(20px);
+        transition: transform 0.25s;
+      }
+      .modal-bg.on .modal {
+        transform: translateY(0);
+      }
+      .modal-hdr {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 18px;
+        border-bottom: 1px solid var(--c-bd);
+        flex-shrink: 0;
+      }
+      .modal-title {
+        font-size: 15px;
+        font-weight: 700;
+      }
+      .modal-close {
+        background: var(--c-bg3);
+        border: 1px solid var(--c-bd);
+        color: var(--c-t2);
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+      }
+      .modal-close:hover {
+        color: var(--c-hot);
+        border-color: rgba(255, 59, 107, 0.3);
+      }
+      .modal-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px 18px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--c-bg3) transparent;
+      }
+      .modal-body::-webkit-scrollbar {
+        width: 3px;
+      }
+      .modal-body::-webkit-scrollbar-thumb {
+        background: var(--c-bg3);
+        border-radius: 3px;
+      }
+      .section-label {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: var(--c-t3);
+        margin-bottom: 10px;
+      }
+      .theme-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 18px;
+      }
+      .theme-card {
+        padding: 14px;
+        border-radius: 10px;
+        cursor: pointer;
+        border: 2px solid var(--c-bd);
+        transition: all 0.15s;
+        position: relative;
+      }
+      .theme-card.on {
+        border-color: var(--c-acc);
+        box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
+      }
+      .theme-card .tc-label {
+        font-size: 12px;
+        font-weight: 600;
+        margin-top: 8px;
+      }
+      .theme-card .tc-colors {
+        display: flex;
+        gap: 3px;
+        margin-bottom: 6px;
+      }
+      .tc-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+      }
+      .eq-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .eq-band {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .eq-label {
+        font-size: 11px;
+        font-family: var(--f-mono);
+        color: var(--c-t2);
+        width: 70px;
+        flex-shrink: 0;
+      }
+      .eq-sl {
+        flex: 1;
+        -webkit-appearance: none;
+        appearance: none;
+        height: 3px;
+        border-radius: 3px;
+        background: var(--c-bg3);
+        outline: none;
+        cursor: pointer;
+      }
+      .eq-sl::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--c-acc);
+        cursor: pointer;
+        transition: transform 0.15s;
+      }
+      .eq-sl:hover::-webkit-slider-thumb {
+        transform: scale(1.2);
+      }
+      .eq-val {
+        font-size: 10px;
+        font-family: var(--f-mono);
+        color: var(--c-acc);
+        width: 34px;
+        text-align: right;
+      }
+      .fav-item,
+      .hist-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
+        border-radius: 9px;
+        border: 1px solid var(--c-bd);
+        margin-bottom: 6px;
+        cursor: pointer;
+        transition: all 0.12s;
+      }
+      .fav-item:hover,
+      .hist-item:hover {
+        background: var(--c-bg3);
+        border-color: rgba(0, 212, 255, 0.2);
+      }
+      .fi-logo {
+        width: 34px;
+        height: 34px;
+        border-radius: 7px;
+        background: var(--c-bg3);
+        border: 1px solid var(--c-bd);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .fi-logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      .fi-name {
+        font-size: 13px;
+        font-weight: 600;
+        flex: 1;
+      }
+      .fi-del {
+        background: none;
+        border: none;
+        color: var(--c-t3);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 5px;
+        transition: color 0.15s;
+      }
+      .fi-del:hover {
+        color: var(--c-hot);
+      }
+      .fi-time {
+        font-size: 10px;
+        color: var(--c-t3);
+        font-family: var(--f-mono);
+      }
+      .inp-file {
+        display: none;
+      }
+      .inp-url {
+        width: 100%;
+        padding: 9px 12px;
+        background: var(--c-bg3);
+        border: 1px solid var(--c-bd);
+        border-radius: 8px;
+        color: var(--c-t1);
+        font-size: 13px;
+        outline: none;
+        margin-bottom: 10px;
+        transition: border-color 0.2s;
+      }
+      .inp-url:focus {
+        border-color: var(--c-acc);
+      }
+      .inp-url::placeholder {
+        color: var(--c-t3);
+      }
+      .btn-primary {
+        width: 100%;
+        padding: 10px;
+        background: var(--c-acc);
+        color: var(--c-bg0);
+        border: none;
+        border-radius: 9px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s;
+        font-family: var(--f-ui);
+      }
+      .btn-primary:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+      .btn-secondary {
+        padding: 8px 16px;
+        background: var(--c-bg3);
+        color: var(--c-t1);
+        border: 1px solid var(--c-bd);
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s;
+        font-family: var(--f-ui);
+      }
+      .btn-secondary:hover {
+        border-color: var(--c-acc);
+        color: var(--c-acc);
+      }
+      .m3u-drop {
+        border: 2px dashed var(--c-bd);
+        border-radius: 10px;
+        padding: 28px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 12px;
+      }
+      .m3u-drop:hover,
+      .m3u-drop.over {
+        border-color: var(--c-acc);
+        background: rgba(0, 212, 255, 0.04);
+      }
+      .m3u-drop svg {
+        width: 32px;
+        height: 32px;
+        color: var(--c-t3);
+        margin-bottom: 8px;
+      }
+      .m3u-drop p {
+        font-size: 13px;
+        color: var(--c-t3);
+      }
+      .m3u-drop strong {
+        color: var(--c-acc);
+      }
+      #epg-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .epg-row {
+        background: var(--c-bg3);
+        border-radius: 9px;
+        padding: 12px;
+        border: 1px solid var(--c-bd);
+      }
+      .epg-time {
+        font-size: 10px;
+        font-family: var(--f-mono);
+        color: var(--c-acc);
+        margin-bottom: 4px;
+      }
+      .epg-prog {
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .epg-desc {
+        font-size: 11px;
+        color: var(--c-t2);
+        margin-top: 3px;
+      }
+      .epg-now {
+        border-color: var(--c-acc);
+        background: rgba(0, 212, 255, 0.06);
+      }
+      .empty-state {
+        text-align: center;
+        padding: 32px 16px;
+        color: var(--c-t3);
+        font-size: 12px;
+      }
+      .empty-state svg {
+        width: 36px;
+        height: 36px;
+        margin-bottom: 10px;
+        opacity: 0.4;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <header id="hdr">
+        <div id="logo">
+          <div class="logo-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+              <rect x="2" y="7" width="20" height="15" rx="2" />
+              <polygon points="10,10 16,14 10,18" fill="white" stroke="none" />
+            </svg>
+          </div>
+          NusaTV
         </div>
-        <div id="country-list"></div>
-        <div id="country-empty">Negara tidak ditemukan</div>
-      </div>
-    </div>
-
-    <div class="sidebar-header">
-      <span class="sidebar-title">Channels</span>
-      <span id="channel-count">0</span>
-    </div>
-
-    <div id="channel-list-wrap">
-      <div class="ch-loading-indicator">
-        <div class="spinner"></div>
-        Memuat daftar channel...
-      </div>
-    </div>
-  </aside>
-
-  <main id="main">
-    <div id="video-wrapper">
-      <video id="main-video" playsinline></video>
-
-      <div id="no-stream-overlay">
-        <div class="no-stream-icon">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="2" y="7" width="20" height="15" rx="2" ry="2"/>
-            <polyline points="17,2 12,7 7,2"/>
+        <div id="search-wrap">
+          <svg
+            class="s-icon"
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
           </svg>
+          <input id="search-input" type="text" placeholder="Cari channel..." />
         </div>
-        <div class="no-stream-title">Pilih Channel</div>
-        <div class="no-stream-sub">Pilih saluran dari daftar di sebelah kiri untuk mulai menonton</div>
-      </div>
-
-      <div id="loading-overlay">
-        <div class="loading-ring"></div>
-        <div class="loading-text">MEMUAT STREAM...</div>
-      </div>
-
-      <div id="channel-info-bar">
-        <div class="info-logo-wrap" id="info-logo-wrap">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="2" y="7" width="20" height="15" rx="2"/>
-          </svg>
+        <div id="hdr-right">
+          <div id="stat">
+            <div class="dot"></div>
+            <span id="stat-ch">—</span>
+          </div>
+          <button class="hbtn" id="btn-fav" title="Favorit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path
+                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+              />
+            </svg>
+            <span class="tt">Favorit</span>
+          </button>
+          <button class="hbtn" id="btn-hist" title="History">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            <span class="tt">Riwayat</span>
+          </button>
+          <button class="hbtn" id="btn-m3u" title="Import M3U">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            <span class="tt">Import M3U</span>
+          </button>
+          <button class="hbtn" id="btn-epg" title="Jadwal Acara">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            <span class="tt">EPG / Jadwal</span>
+          </button>
+          <button class="hbtn" id="btn-theme" title="Tema">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="5" />
+              <line x1="12" y1="1" x2="12" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="23" />
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+              <line x1="1" y1="12" x2="3" y2="12" />
+              <line x1="21" y1="12" x2="23" y2="12" />
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
+            <span class="tt">Tema</span>
+          </button>
+          <button class="hbtn" id="btn-eq" title="Equalizer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="4" y1="21" x2="4" y2="14" />
+              <line x1="4" y1="10" x2="4" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12" y2="3" />
+              <line x1="20" y1="21" x2="20" y2="16" />
+              <line x1="20" y1="12" x2="20" y2="3" />
+              <line x1="1" y1="14" x2="7" y2="14" />
+              <line x1="9" y1="8" x2="15" y2="8" />
+              <line x1="17" y1="16" x2="23" y2="16" />
+            </svg>
+            <span class="tt">Equalizer</span>
+          </button>
+          <button class="hbtn" id="btn-sb" title="Toggle Sidebar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <line x1="9" y1="3" x2="9" y2="21" />
+            </svg>
+            <span class="tt">Sidebar</span>
+          </button>
         </div>
-        <div class="info-text">
-          <div class="info-name" id="info-name">—</div>
-          <div class="info-sub">
-            <span class="live-badge">LIVE</span>
-            <span id="info-country">—</span>
-            <span id="info-category">—</span>
+      </header>
+      <aside id="sb">
+        <div id="tab-bar">
+          <button class="tab on" data-cat="all">🌐 Semua</button>
+          <button class="tab" data-cat="general">📡 Umum</button>
+          <button class="tab" data-cat="news">📰 Berita</button>
+          <button class="tab" data-cat="sports">⚽ Olahraga</button>
+          <button class="tab" data-cat="movies">🎬 Film</button>
+          <button class="tab" data-cat="series">📺 Series</button>
+          <button class="tab" data-cat="entertainment">🎪 Hiburan</button>
+          <button class="tab" data-cat="music">🎵 Musik</button>
+          <button class="tab" data-cat="animation">🎌 Anime</button>
+          <button class="tab" data-cat="kids">👶 Anak</button>
+          <button class="tab" data-cat="family">👨‍👩‍👧 Keluarga</button>
+          <button class="tab" data-cat="documentary">🎥 Dokumenter</button>
+          <button class="tab" data-cat="education">📚 Pendidikan</button>
+          <button class="tab" data-cat="lifestyle">🌿 Lifestyle</button>
+          <button class="tab" data-cat="cooking">🍳 Memasak</button>
+          <button class="tab" data-cat="travel">✈️ Travel</button>
+          <button class="tab" data-cat="science">🔬 Sains</button>
+          <button class="tab" data-cat="business">💼 Bisnis</button>
+          <button class="tab" data-cat="auto">🚗 Otomotif</button>
+          <button class="tab" data-cat="comedy">😂 Komedi</button>
+          <button class="tab" data-cat="culture">🎭 Budaya</button>
+          <button class="tab" data-cat="religious">⛪ Religi</button>
+          <button class="tab" data-cat="classic">📼 Klasik</button>
+          <button class="tab" data-cat="hobby">🎯 Hobi</button>
+          <button class="tab" data-cat="outdoor">🏕 Outdoor</button>
+          <button class="tab" data-cat="local">🏙 Lokal</button>
+          <button class="tab" data-cat="shop">🛍 Belanja</button>
+          <button class="tab" data-cat="weather">🌤 Cuaca</button>
+          <button class="tab" data-cat="relax">😌 Relaksasi</button>
+          <button class="tab" data-cat="legislative">🏛 Legislatif</button>
+          <button class="tab" data-cat="xxx">🔞 Dewasa</button>
+          <button class="tab" data-cat="★">❤️ Favorit</button>
+        </div>
+        <div id="ctr-wrap">
+          <div id="ctr-btn">
+            <span class="flag">🌍</span>
+            <span class="lbl">Semua Negara</span>
+            <span class="arr">
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </span>
+          </div>
+          <div id="ctr-panel">
+            <div id="csp">
+              <svg
+                class="csp-ic"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+              <input id="csi" type="text" placeholder="Cari negara..." />
+            </div>
+            <div id="ctr-list"></div>
+            <div id="ctr-empty">Tidak ditemukan</div>
+          </div>
+        </div>
+        <div id="sb-hdr">
+          <span class="sb-title">Channels</span>
+          <span id="ch-count">0</span>
+        </div>
+        <div id="ch-list-wrap">
+          <div id="ch-list-viewport">
+            <div id="ch-list-spacer">
+              <div id="ch-spinner">
+                <div class="spin"></div>
+                Memuat channel...
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+      <main id="main">
+        <div id="vwrap">
+          <video id="vid" playsinline></video>
+          <div id="no-stream">
+            <div class="ns-icon">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <rect x="2" y="7" width="20" height="15" rx="2" />
+                <polyline points="17,2 12,7 7,2" />
+              </svg>
+            </div>
+            <div style="font-size: 18px; font-weight: 700; color: var(--c-t2)">Pilih Channel</div>
+            <div style="font-size: 12px; color: var(--c-t3); text-align: center">
+              Pilih saluran dari daftar untuk mulai menonton
+            </div>
+          </div>
+          <div id="load-ov">
+            <div class="ld-ring"></div>
+            <div class="ld-txt">MEMUAT STREAM...</div>
+          </div>
+          <div id="ch-info-bar">
+            <div class="info-logo" id="info-logo">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <rect x="2" y="7" width="20" height="15" rx="2" />
+              </svg>
+            </div>
+            <div>
+              <div id="info-name">—</div>
+              <div id="info-sub">
+                <span class="live-pill">LIVE</span>
+                <span id="info-meta">—</span>
+              </div>
+            </div>
+          </div>
+          <div id="zoom-ov">100%</div>
+          <div id="center-btn">
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
+          </div>
+          <div id="hov-ctrl">
+            <div class="hv-btn" id="hov-zout">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <line x1="8" y1="11" x2="14" y2="11" />
+              </svg>
+              <span class="tt">Zoom Out</span>
+            </div>
+            <div class="hv-btn" id="hov-zin">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <line x1="11" y1="8" x2="11" y2="14" />
+                <line x1="8" y1="11" x2="14" y2="11" />
+              </svg>
+              <span class="tt">Zoom In</span>
+            </div>
+            <div class="hv-btn" id="hov-zreset">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3.51 15a9 9 0 1 0 .49-3.82" />
+                <polyline points="1 10 3.5 10.5 5 8.5" />
+              </svg>
+              <span class="tt">Reset Zoom</span>
+            </div>
+            <div class="hv-btn" id="hov-fav" style="margin-left: auto">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path
+                  d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                />
+              </svg>
+              <span class="tt">Favorit</span>
+            </div>
+            <div class="hv-btn" id="hov-ss">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path
+                  d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+                />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+              <span class="tt">Screenshot</span>
+            </div>
+            <div class="hv-btn" id="hov-pip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="4" width="20" height="16" rx="2" />
+                <rect x="12" y="11" width="9" height="7" rx="1" />
+              </svg>
+              <span class="tt">PiP</span>
+            </div>
+            <div class="hv-btn" id="hov-fs">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 3 21 3 21 9" />
+                <polyline points="9 21 3 21 3 15" />
+                <line x1="21" y1="3" x2="14" y2="10" />
+                <line x1="3" y1="21" x2="10" y2="14" />
+              </svg>
+              <span class="tt">Fullscreen</span>
+            </div>
+          </div>
+        </div>
+        <div id="ctrl-bar">
+          <div id="prog"><div id="prog-fill"></div></div>
+          <button class="cbtn" id="btn-prev">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15,18 9,12 15,6" />
+            </svg>
+            <span class="tt">Sebelumnya</span>
+          </button>
+          <button class="cbtn prim lg" id="btn-play">
+            <svg id="ico-play" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5,3 19,12 5,21" />
+            </svg>
+            <svg id="ico-pause" viewBox="0 0 24 24" fill="currentColor" style="display: none">
+              <rect x="6" y="4" width="4" height="16" />
+              <rect x="14" y="4" width="4" height="16" />
+            </svg>
+          </button>
+          <button class="cbtn" id="btn-next">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9,18 15,12 9,6" />
+            </svg>
+            <span class="tt">Berikutnya</span>
+          </button>
+          <div class="div"></div>
+          <div id="vol-grp">
+            <button class="cbtn" id="btn-mute">
+              <svg
+                id="ico-vol"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polygon points="11,5 6,9 2,9 2,15 6,15 11,19" />
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+              </svg>
+              <svg
+                id="ico-mut"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                style="display: none"
+              >
+                <polygon points="11,5 6,9 2,9 2,15 6,15 11,19" />
+                <line x1="23" y1="9" x2="17" y2="15" />
+                <line x1="17" y1="9" x2="23" y2="15" />
+              </svg>
+            </button>
+            <input type="range" id="vol-sl" min="0" max="100" value="80" />
+            <div id="vol-val">80%</div>
+          </div>
+          <div class="div"></div>
+          <div id="zoom-grp">
+            <button class="cbtn" id="btn-zout">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <line x1="8" y1="11" x2="14" y2="11" />
+              </svg>
+              <span class="tt">Zoom Out</span>
+            </button>
+            <div id="zoom-val">100%</div>
+            <button class="cbtn" id="btn-zin">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <line x1="11" y1="8" x2="11" y2="14" />
+                <line x1="8" y1="11" x2="14" y2="11" />
+              </svg>
+              <span class="tt">Zoom In</span>
+            </button>
+            <button class="cbtn" id="btn-zreset">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3.51 15a9 9 0 1 0 .49-3.82" />
+                <polyline points="1 10 3.5 10.5 5 8.5" />
+              </svg>
+              <span class="tt">Reset</span>
+            </button>
+          </div>
+          <div class="div"></div>
+          <div id="ql-wrap">
+            <div id="ql-btn">AUTO ▾</div>
+            <div id="ql-menu"></div>
+          </div>
+          <button class="cbtn" id="btn-pip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <rect x="12" y="11" width="9" height="7" rx="1" />
+            </svg>
+            <span class="tt">PiP</span>
+          </button>
+          <button class="cbtn" id="btn-theater">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="5" width="20" height="14" rx="2" />
+              <line x1="2" y1="10" x2="22" y2="10" />
+            </svg>
+            <span class="tt">Theater</span>
+          </button>
+          <button class="cbtn" id="btn-ss">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path
+                d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+              />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+            <span class="tt">Screenshot</span>
+          </button>
+          <button class="cbtn" id="btn-fs">
+            <svg
+              id="ico-exp"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <polyline points="15 3 21 3 21 9" />
+              <polyline points="9 21 3 21 3 15" />
+              <line x1="21" y1="3" x2="14" y2="10" />
+              <line x1="3" y1="21" x2="10" y2="14" /></svg
+            ><svg
+              id="ico-com"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              style="display: none"
+            >
+              <polyline points="4 14 10 14 10 20" />
+              <polyline points="20 10 14 10 14 4" />
+              <line x1="10" y1="14" x2="3" y2="21" />
+              <line x1="21" y1="3" x2="14" y2="10" />
+            </svg>
+            <span class="tt">Fullscreen (F)</span>
+          </button>
+          <div id="time-disp">— / LIVE</div>
+        </div>
+      </main>
+    </div>
+
+    <div id="toast-wrap"></div>
+
+    <div class="modal-bg" id="m-fav">
+      <div class="modal">
+        <div class="modal-hdr">
+          <span class="modal-title">❤️ Favorit</span>
+          <button class="modal-close" data-close="m-fav">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body" id="fav-body"></div>
+      </div>
+    </div>
+
+    <div class="modal-bg" id="m-hist">
+      <div class="modal">
+        <div class="modal-hdr">
+          <span class="modal-title">🕐 Riwayat Tontonan</span>
+          <button class="modal-close" data-close="m-hist">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body" id="hist-body"></div>
+      </div>
+    </div>
+
+    <div class="modal-bg" id="m-m3u">
+      <div class="modal">
+        <div class="modal-hdr">
+          <span class="modal-title">📝 Import M3U</span>
+          <button class="modal-close" data-close="m-m3u">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="section-label">File M3U / M3U8</div>
+          <div class="m3u-drop" id="m3u-drop">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            <p>
+              Drop file M3U di sini atau
+              <strong>klik untuk browse</strong>
+            </p>
+          </div>
+          <input type="file" id="m3u-file" class="inp-file" accept=".m3u,.m3u8,.txt" />
+          <div class="section-label" style="margin-top: 14px">URL M3U / M3U8</div>
+          <input
+            type="url"
+            id="m3u-url"
+            class="inp-url"
+            placeholder="https://example.com/playlist.m3u"
+          />
+          <button class="btn-primary" id="m3u-load-url">Load dari URL</button>
+          <div style="margin-top: 10px; text-align: center">
+            <button class="btn-secondary" id="m3u-reset">Reset ke IPTV-ORG</button>
           </div>
         </div>
       </div>
+    </div>
 
-      <div id="zoom-overlay">100%</div>
-
-      <div id="center-play-btn" id="center-play-btn">
-        <svg viewBox="0 0 24 24" fill="currentColor">
-          <polygon points="5,3 19,12 5,21"/>
-        </svg>
+    <div class="modal-bg" id="m-epg">
+      <div class="modal">
+        <div class="modal-hdr">
+          <span class="modal-title" id="epg-title">📅 Jadwal Acara</span>
+          <button class="modal-close" data-close="m-epg">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body" id="epg-body"></div>
       </div>
+    </div>
 
-      <div id="hover-controls">
-        <div class="hover-btn panel-btn" id="hov-zoom-out" title="Zoom Out">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/>
-          </svg>
-          <div class="tooltip">Zoom Out</div>
+    <div class="modal-bg" id="m-theme">
+      <div class="modal">
+        <div class="modal-hdr">
+          <span class="modal-title">🎨 Pilih Tema</span>
+          <button class="modal-close" data-close="m-theme">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
-        <div class="hover-btn panel-btn" id="hov-zoom-in" title="Zoom In">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
-          </svg>
-          <div class="tooltip">Zoom In</div>
+        <div class="modal-body"><div class="theme-grid" id="theme-grid"></div></div>
+      </div>
+    </div>
+
+    <div class="modal-bg" id="m-eq">
+      <div class="modal">
+        <div class="modal-hdr">
+          <span class="modal-title">🔊 Audio Equalizer</span>
+          <button class="modal-close" data-close="m-eq">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
-        <div class="hover-btn panel-btn" id="hov-zoom-reset" title="Reset Zoom">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3.51 15a9 9 0 1 0 .49-3.82"/><polyline points="1 10 3.5 10.5 5 8.5"/>
-          </svg>
-          <div class="tooltip">Reset Zoom</div>
-        </div>
-        <div style="margin-left:auto" class="hover-btn panel-btn" id="hov-screenshot" title="Screenshot">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-            <circle cx="12" cy="13" r="4"/>
-          </svg>
-          <div class="tooltip">Screenshot</div>
-        </div>
-        <div class="hover-btn panel-btn" id="hov-pip" title="Picture in Picture">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="11" width="9" height="7" rx="1"/>
-          </svg>
-          <div class="tooltip">Picture-in-Picture</div>
-        </div>
-        <div class="hover-btn panel-btn" id="hov-fullscreen" title="Fullscreen">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
-            <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
-          </svg>
-          <div class="tooltip">Layar Penuh</div>
+        <div class="modal-body">
+          <div style="display: flex; gap: 8px; margin-bottom: 16px">
+            <button class="btn-secondary" id="eq-flat">Flat</button>
+            <button class="btn-secondary" id="eq-bass">Bass Boost</button>
+            <button class="btn-secondary" id="eq-vocal">Vocal</button>
+            <button class="btn-secondary" id="eq-cinema">Cinema</button>
+          </div>
+          <div class="eq-grid" id="eq-grid"></div>
         </div>
       </div>
     </div>
 
-    <div id="controls-bar">
-      <div id="progress-track">
-        <div id="progress-fill"></div>
-      </div>
+    <script>
+      const API = "https://iptv-org.github.io/api";
+      const ITEM_H = 58;
+      const ITEM_BUF = 6;
+      const STORAGE = {
+        get: (k) => {
+          try {
+            return JSON.parse(localStorage.getItem(k));
+          } catch {
+            return null;
+          }
+        },
+        set: (k, v) => {
+          try {
+            localStorage.setItem(k, JSON.stringify(v));
+          } catch {}
+        },
+      };
 
-      <button class="ctrl-btn panel-btn" id="btn-prev" title="Channel Sebelumnya">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="15,18 9,12 15,6"/>
-        </svg>
-        <div class="tooltip">Sebelumnya</div>
-      </button>
+      const $ = (id) => document.getElementById(id);
+      const vid = $("vid");
 
-      <button class="ctrl-btn primary large panel-btn" id="btn-play">
-        <svg id="icon-play" viewBox="0 0 24 24" fill="currentColor">
-          <polygon points="5,3 19,12 5,21"/>
-        </svg>
-        <svg id="icon-pause" viewBox="0 0 24 24" fill="currentColor" style="display:none">
-          <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
-        </svg>
-        <div class="tooltip">Play / Pause</div>
-      </button>
+      let allChannels = [],
+        allStreams = [],
+        channelStreamMap = {},
+        countryMap = {};
+      let customChannels = null;
+      let filteredChannels = [],
+        currentIndex = -1;
+      let activeCategory = "all",
+        activeCountry = "",
+        searchQuery = "";
+      let hls = null,
+        isPlaying = false,
+        isMuted = false,
+        theaterMode = false;
+      let currentZoom = 1,
+        zoomStep = 0.15,
+        zoomMin = 0.5,
+        zoomMax = 3;
+      let zoomTimer = null,
+        qlOpen = false,
+        retries = {};
+      let favorites = STORAGE.get("nusa_favs") || [];
+      let history_ = STORAGE.get("nusa_hist") || [];
+      let currentTheme = STORAGE.get("nusa_theme") || "dark";
+      let currentChData = null;
+      let audioCtx = null,
+        srcNode = null,
+        eqFilters = [];
+      let eqValues = STORAGE.get("nusa_eq") || [0, 0, 0, 0, 0];
 
-      <button class="ctrl-btn panel-btn" id="btn-next" title="Channel Berikutnya">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="9,18 15,12 9,6"/>
-        </svg>
-        <div class="tooltip">Berikutnya</div>
-      </button>
+      const THEMES = [
+        { id: "dark", label: "Dark", colors: ["#030508", "#0d1117", "#00d4ff", "#7c3aed"] },
+        { id: "light", label: "Light", colors: ["#f1f5f9", "#dde3ee", "#00a8cc", "#6d28d9"] },
+        { id: "amoled", label: "AMOLED", colors: ["#000000", "#0a0a0a", "#00d4ff", "#7c3aed"] },
+        { id: "midnight", label: "Midnight", colors: ["#01050f", "#051224", "#4da6ff", "#6d28d9"] },
+      ];
 
-      <div class="ctrl-divider"></div>
+      const EQ_BANDS = [
+        { label: "Bass (60Hz)", freq: 60, type: "lowshelf" },
+        { label: "Low-Mid (250Hz)", freq: 250, type: "peaking" },
+        { label: "Mid (1kHz)", freq: 1000, type: "peaking" },
+        { label: "High-Mid (4kHz)", freq: 4000, type: "peaking" },
+        { label: "Treble (16kHz)", freq: 16000, type: "highshelf" },
+      ];
 
-      <div id="volume-group">
-        <button class="ctrl-btn panel-btn" id="btn-mute">
-          <svg id="icon-vol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
-          </svg>
-          <svg id="icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
-            <polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/>
-            <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
-          </svg>
-          <div class="tooltip">Mute / Unmute</div>
-        </button>
-        <input type="range" id="volume-slider" min="0" max="100" value="80">
-        <div id="volume-display">80%</div>
-      </div>
+      const EQ_PRESETS = {
+        flat: [0, 0, 0, 0, 0],
+        bass: [8, 4, 0, -1, -2],
+        vocal: [-2, 3, 6, 3, -1],
+        cinema: [4, 2, 0, 2, 4],
+      };
 
-      <div class="ctrl-divider"></div>
-
-      <div id="zoom-group">
-        <button class="ctrl-btn panel-btn" id="btn-zoom-out" title="Zoom Out">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/>
-          </svg>
-          <div class="tooltip">Zoom Out ( - )</div>
-        </button>
-        <div id="zoom-display">100%</div>
-        <button class="ctrl-btn panel-btn" id="btn-zoom-in" title="Zoom In">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
-          </svg>
-          <div class="tooltip">Zoom In ( + )</div>
-        </button>
-        <button class="ctrl-btn panel-btn" id="btn-zoom-reset" title="Reset Zoom">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3.51 15a9 9 0 1 0 .49-3.82"/><polyline points="1 10 3.5 10.5 5 8.5"/>
-          </svg>
-          <div class="tooltip">Reset Zoom</div>
-        </button>
-      </div>
-
-      <div class="ctrl-divider"></div>
-
-      <button class="ctrl-btn panel-btn" id="btn-pip" title="Picture in Picture">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="2" y="4" width="20" height="16" rx="2"/>
-          <rect x="12" y="11" width="9" height="7" rx="1"/>
-        </svg>
-        <div class="tooltip">PiP Mode</div>
-      </button>
-
-      <button class="ctrl-btn panel-btn" id="btn-theater" title="Theater Mode">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="2" y="5" width="20" height="14" rx="2"/>
-          <line x1="2" y1="10" x2="22" y2="10"/>
-        </svg>
-        <div class="tooltip">Theater Mode</div>
-      </button>
-
-      <button class="ctrl-btn panel-btn" id="btn-screenshot" title="Screenshot">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-          <circle cx="12" cy="13" r="4"/>
-        </svg>
-        <div class="tooltip">Screenshot</div>
-      </button>
-
-      <button class="ctrl-btn panel-btn" id="btn-fullscreen" title="Fullscreen">
-        <svg id="icon-fs-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
-          <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
-        </svg>
-        <svg id="icon-fs-compress" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
-          <polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/>
-          <line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/>
-        </svg>
-        <div class="tooltip">Fullscreen ( F )</div>
-      </button>
-
-      <div id="time-display" id="time-display">00:00 / LIVE</div>
-    </div>
-  </main>
-</div>
-
-<div id="toast-container"></div>
-<div id="pip-indicator">📺 Picture-in-Picture aktif</div>
-
-<script>
-const API_BASE = 'https://iptv-org.github.io/api';
-const video = document.getElementById('main-video');
-
-let allChannels = [];
-let allStreams = [];
-let channelStreamMap = {};
-let filteredChannels = [];
-let currentIndex = -1;
-let currentZoom = 1;
-let zoomStep = 0.15;
-let zoomMin = 0.5;
-let zoomMax = 3;
-let activeCategory = 'all';
-let activeCountry = '';
-let searchQuery = '';
-let hls = null;
-let isPlaying = false;
-let isMuted = false;
-let theaterMode = false;
-let progressTimer = null;
-let zoomHideTimer = null;
-let streamRetries = {};
-
-function showToast(msg, type = 'info') {
-  const icons = {
-    info: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
-    success: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>',
-    error: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff3b6b" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
-    warning: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="m10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
-  };
-  const container = document.getElementById('toast-container');
-  const toast = document.createElement('div');
-  toast.className = 'toast';
-  toast.innerHTML = `<span class="toast-icon">${icons[type] || icons.info}</span><span>${msg}</span>`;
-  container.appendChild(toast);
-  requestAnimationFrame(() => toast.classList.add('show'));
-  setTimeout(() => {
-    toast.classList.remove('show');
-    setTimeout(() => toast.remove(), 400);
-  }, 3000);
-}
-
-async function fetchJSON(url) {
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json();
-}
-
-let countryMap = {};
-
-async function loadData() {
-  try {
-    const [channels, streams, countries] = await Promise.all([
-      fetchJSON(`${API_BASE}/channels.json`),
-      fetchJSON(`${API_BASE}/streams.json`),
-      fetchJSON(`${API_BASE}/countries.json`)
-    ]);
-
-    allChannels = channels;
-    allStreams = streams;
-
-    countryMap = {};
-    countries.forEach(c => { countryMap[c.code] = { name: c.name, flag: c.flag || '🏳️' }; });
-
-    channelStreamMap = {};
-    for (const s of streams) {
-      if (s.channel && s.url) {
-        if (!channelStreamMap[s.channel]) channelStreamMap[s.channel] = [];
-        channelStreamMap[s.channel].push(s);
+      function toast(msg, type = "info") {
+        const icons = {
+          info: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+          ok: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>',
+          err: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ff3b6b" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+          warn: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="m10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+        };
+        const c = $("toast-wrap");
+        const el = document.createElement("div");
+        el.className = "toast";
+        el.innerHTML = `${icons[type] || icons.info}<span>${msg}</span>`;
+        c.appendChild(el);
+        requestAnimationFrame(() => el.classList.add("on"));
+        setTimeout(() => {
+          el.classList.remove("on");
+          setTimeout(() => el.remove(), 350);
+        }, 3000);
       }
-    }
 
-    const channelsWithStreams = allChannels.filter(ch => channelStreamMap[ch.id]);
+      async function fetchJSON(url) {
+        const r = await fetch(url);
+        if (!r.ok) throw new Error(r.status);
+        return r.json();
+      }
 
-    document.getElementById('stat-channels').textContent = `${channelsWithStreams.length} CH`;
-    document.getElementById('stat-streams').textContent = `${streams.length} Streams`;
-
-    const countryCodes = [...new Set(channelsWithStreams.map(c => c.country).filter(Boolean))].sort((a, b) => {
-      const na = countryMap[a] ? countryMap[a].name : a;
-      const nb = countryMap[b] ? countryMap[b].name : b;
-      return na.localeCompare(nb);
-    });
-
-    const countPerCountry = {};
-    channelsWithStreams.forEach(ch => {
-      if (ch.country) countPerCountry[ch.country] = (countPerCountry[ch.country] || 0) + 1;
-    });
-
-    buildCountryDropdown(countryCodes, countPerCountry);
-
-    filteredChannels = channelsWithStreams;
-    renderChannelList();
-    showToast(`${channelsWithStreams.length} channel berhasil dimuat`, 'success');
-  } catch (err) {
-    console.error(err);
-    document.getElementById('channel-list-wrap').innerHTML = `<div class="error-state">Gagal memuat data.<br>Periksa koneksi internet.</div>`;
-    showToast('Gagal memuat data channel', 'error');
-  }
-}
-
-function getInitials(name) {
-  return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
-}
-
-function renderChannelList() {
-  const wrap = document.getElementById('channel-list-wrap');
-  const q = searchQuery.toLowerCase();
-
-  let list = allChannels.filter(ch => channelStreamMap[ch.id]);
-
-  if (activeCategory !== 'all') {
-    list = list.filter(ch => ch.categories && ch.categories.includes(activeCategory));
-  }
-  if (activeCountry) {
-    list = list.filter(ch => ch.country === activeCountry);
-  }
-  if (q) {
-    list = list.filter(ch => ch.name.toLowerCase().includes(q) || (ch.alt_names && ch.alt_names.some(n => n.toLowerCase().includes(q))));
-  }
-
-  filteredChannels = list;
-  document.getElementById('channel-count').textContent = list.length;
-
-  if (!list.length) {
-    wrap.innerHTML = `<div class="ch-loading-indicator" style="color:var(--text-muted)">Tidak ada channel ditemukan</div>`;
-    return;
-  }
-
-  const frag = document.createDocumentFragment();
-  list.forEach((ch, i) => {
-    const item = document.createElement('div');
-    item.className = 'channel-item' + (i === currentIndex ? ' active' : '');
-    item.dataset.index = i;
-
-    const streams = channelStreamMap[ch.id] || [];
-    const hasHD = streams.some(s => s.quality && s.quality.toLowerCase().includes('hd'));
-    const cat = ch.categories && ch.categories[0] ? ch.categories[0] : '—';
-
-    item.innerHTML = `
-      <div class="ch-logo">
-        ${ch.logo
-          ? `<img src="${ch.logo}" alt="${ch.name}" loading="lazy" onerror="this.parentElement.innerHTML='<span class=ch-logo-placeholder>${getInitials(ch.name)}</span>'">`
-          : `<span class="ch-logo-placeholder">${getInitials(ch.name)}</span>`
+      async function loadData() {
+        try {
+          const [chs, sts, ctrs] = await Promise.all([
+            fetchJSON(`${API}/channels.json`),
+            fetchJSON(`${API}/streams.json`),
+            fetchJSON(`${API}/countries.json`),
+          ]);
+          allChannels = chs;
+          allStreams = sts;
+          countryMap = {};
+          ctrs.forEach((c) => {
+            countryMap[c.code] = { name: c.name, flag: c.flag || "🏳️" };
+          });
+          channelStreamMap = {};
+          sts.forEach((s) => {
+            if (s.channel && s.url) {
+              if (!channelStreamMap[s.channel]) channelStreamMap[s.channel] = [];
+              channelStreamMap[s.channel].push(s);
+            }
+          });
+          const withStreams = chs.filter((c) => channelStreamMap[c.id]);
+          $("stat-ch").textContent = withStreams.length + " CH";
+          const codes = [...new Set(withStreams.map((c) => c.country).filter(Boolean))];
+          const cntPerCode = {};
+          withStreams.forEach((c) => {
+            if (c.country) cntPerCode[c.country] = (cntPerCode[c.country] || 0) + 1;
+          });
+          buildCountryDrop(codes, cntPerCode);
+          filteredChannels = withStreams;
+          renderList();
+          toast(`${withStreams.length} channel dimuat`, "ok");
+        } catch (e) {
+          $("ch-spinner").innerHTML =
+            `<div style="color:var(--c-hot)">Gagal memuat data. Cek koneksi.</div>`;
+          toast("Gagal memuat data", "err");
         }
-      </div>
+      }
+
+      function getChannels() {
+        return customChannels || allChannels.filter((c) => channelStreamMap[c.id]);
+      }
+
+      let allCodes = [],
+        allCntMap = {};
+      function buildCountryDrop(codes, cntMap) {
+        allCodes = codes.sort((a, b) => {
+          const na = countryMap[a]?.name || a;
+          const nb = countryMap[b]?.name || b;
+          return na.localeCompare(nb);
+        });
+        allCntMap = cntMap;
+        renderCtrList("");
+      }
+
+      function renderCtrList(q) {
+        const list = $("ctr-list"),
+          empty = $("ctr-empty");
+        const ql = q.toLowerCase();
+        const f = allCodes.filter((code) => {
+          const n = (countryMap[code]?.name || code).toLowerCase();
+          return n.includes(ql) || code.toLowerCase().includes(ql);
+        });
+        list.innerHTML = "";
+        if (!ql) {
+          const all = document.createElement("div");
+          all.className = "ctr-opt" + (!activeCountry ? " on" : "");
+          all.innerHTML = `<span class="cf">🌍</span><span class="cn">Semua Negara</span><svg class="ck" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+          all.onclick = () => selectCountry("", "Semua Negara", "🌍");
+          list.appendChild(all);
+        }
+        f.forEach((code) => {
+          const info = countryMap[code] || {};
+          const name = info.name || code,
+            flag = info.flag || "🏳️";
+          const cnt = allCntMap[code] || 0;
+          const el = document.createElement("div");
+          el.className = "ctr-opt" + (activeCountry === code ? " on" : "");
+          el.innerHTML = `<span class="cf">${flag}</span><span class="cn">${name}</span><span class="cc">${cnt}</span><svg class="ck" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+          el.onclick = () => selectCountry(code, name, flag);
+          list.appendChild(el);
+        });
+        empty.classList.toggle("on", f.length === 0);
+      }
+
+      function selectCountry(code, name, flag) {
+        activeCountry = code;
+        const btn = $("ctr-btn");
+        btn.querySelector(".flag").textContent = flag;
+        btn.querySelector(".lbl").textContent = name;
+        closeCtr();
+        renderCtrList($("csi").value);
+        renderList();
+      }
+
+      function openCtr() {
+        $("ctr-panel").classList.add("on");
+        $("ctr-btn").classList.add("on");
+        $("csi").focus();
+        $("csi").value = "";
+        renderCtrList("");
+      }
+      function closeCtr() {
+        $("ctr-panel").classList.remove("on");
+        $("ctr-btn").classList.remove("on");
+      }
+
+      $("ctr-btn").onclick = (e) => {
+        e.stopPropagation();
+        $("ctr-panel").classList.contains("on") ? closeCtr() : openCtr();
+      };
+      $("csi").oninput = (e) => renderCtrList(e.target.value);
+      $("csi").onclick = (e) => e.stopPropagation();
+      $("ctr-panel").onclick = (e) => e.stopPropagation();
+      document.addEventListener("click", closeCtr);
+
+      let renderRAF = null;
+      function renderList() {
+        if (renderRAF) cancelAnimationFrame(renderRAF);
+        renderRAF = requestAnimationFrame(_doRender);
+      }
+
+      function _doRender() {
+        const chs = getChannels();
+        const q = searchQuery.toLowerCase();
+        let list = chs;
+        if (activeCategory === "★") {
+          list = list.filter((c) => favorites.includes(c.id));
+        } else if (activeCategory !== "all") {
+          list = list.filter((c) => c.categories && c.categories.includes(activeCategory));
+        }
+        if (activeCountry) list = list.filter((c) => c.country === activeCountry);
+        if (q)
+          list = list.filter(
+            (c) =>
+              c.name.toLowerCase().includes(q) ||
+              (c.alt_names || []).some((n) => n.toLowerCase().includes(q)),
+          );
+        filteredChannels = list;
+        $("ch-count").textContent = list.length;
+        initVirtualScroll(list);
+      }
+
+      let vsItems = [],
+        vsRendered = new Map();
+      function initVirtualScroll(items) {
+        vsItems = items;
+        vsRendered.clear();
+        const spacer = $("ch-list-spacer");
+        spacer.innerHTML = "";
+        if (!items.length) {
+          spacer.innerHTML = `<div style="text-align:center;padding:32px;color:var(--c-t3);font-size:12px">Tidak ada channel</div>`;
+          spacer.style.height = "100px";
+          return;
+        }
+        spacer.style.height = items.length * ITEM_H + "px";
+        spacer.style.position = "relative";
+        renderVisibleItems();
+      }
+
+      function renderVisibleItems() {
+        const vp = $("ch-list-viewport");
+        const spacer = $("ch-list-spacer");
+        const scrollTop = vp.scrollTop;
+        const vpH = vp.clientHeight;
+        const startIdx = Math.max(0, Math.floor(scrollTop / ITEM_H) - ITEM_BUF);
+        const endIdx = Math.min(
+          vsItems.length - 1,
+          Math.ceil((scrollTop + vpH) / ITEM_H) + ITEM_BUF,
+        );
+
+        const toRemove = [];
+        vsRendered.forEach((el, i) => {
+          if (i < startIdx || i > endIdx) toRemove.push(i);
+        });
+        toRemove.forEach((i) => {
+          const el = vsRendered.get(i);
+          if (el) el.remove();
+          vsRendered.delete(i);
+        });
+
+        for (let i = startIdx; i <= endIdx; i++) {
+          if (vsRendered.has(i)) {
+            const el = vsRendered.get(i);
+            const isActive =
+              filteredChannels[i] && filteredChannels.indexOf(filteredChannels[currentIndex]) === i;
+            el.classList.toggle(
+              "on",
+              currentIndex !== -1 && filteredChannels[currentIndex] === filteredChannels[i],
+            );
+            const star = el.querySelector(".ch-star");
+            if (star) star.classList.toggle("on", favorites.includes(vsItems[i].id));
+            continue;
+          }
+          const ch = vsItems[i];
+          const el = document.createElement("div");
+          el.className = "ch-item" + (filteredChannels[currentIndex] === ch ? " on" : "");
+          el.style.top = i * ITEM_H + "px";
+          el.style.height = ITEM_H + "px";
+          const isFav = favorites.includes(ch.id);
+          const streams = channelStreamMap[ch.id] || [];
+          const hasHD = streams.some((s) => (s.quality || "").toLowerCase().includes("hd"));
+          el.innerHTML = `
+      <div class="ch-logo">${
+        ch.logo
+          ? `<img src="${ch.logo}" loading="lazy" onerror="this.parentElement.innerHTML='<span class=ini>${ini(ch.name)}</span>'" alt="">`
+          : `<span class="ini">${ini(ch.name)}</span>`
+      }</div>
       <div class="ch-info">
         <div class="ch-name">${ch.name}</div>
-        <div class="ch-meta">
-          <span class="ch-badge badge-live">LIVE</span>
-          ${hasHD ? '<span class="ch-badge badge-hd">HD</span>' : ''}
-          <span>${ch.country || '—'}</span>
-          <span>${cat}</span>
-        </div>
+        <div class="ch-meta"><span class="badge b-live">LIVE</span>${hasHD ? '<span class="badge b-hd">HD</span>' : ""}<span>${ch.country || "—"}</span></div>
+      </div>
+      <div class="ch-star${isFav ? " on" : ""}" title="Favorit">
+        <svg width="14" height="14" viewBox="0 0 24 24" ${isFav ? 'fill="currentColor"' : 'fill="none"'} stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
       </div>`;
-
-    item.addEventListener('click', () => playChannel(i));
-    frag.appendChild(item);
-  });
-
-  wrap.innerHTML = '';
-  wrap.appendChild(frag);
-}
-
-function playChannel(index) {
-  if (index < 0 || index >= filteredChannels.length) return;
-  currentIndex = index;
-
-  const ch = filteredChannels[index];
-  const streams = channelStreamMap[ch.id];
-  if (!streams || !streams.length) {
-    showToast('Stream tidak tersedia untuk channel ini', 'warning');
-    return;
-  }
-
-  const stream = streams[0];
-  loadStream(stream.url, ch);
-
-  document.querySelectorAll('.channel-item').forEach((el, i) => {
-    el.classList.toggle('active', i === index);
-  });
-
-  const activeEl = document.querySelector('.channel-item.active');
-  if (activeEl) activeEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-
-  updateInfoBar(ch);
-  document.getElementById('no-stream-overlay').style.display = 'none';
-}
-
-function loadStream(url, ch) {
-  showLoading(true);
-
-  if (hls) { hls.destroy(); hls = null; }
-  video.src = '';
-
-  const isHLS = url.includes('.m3u8') || url.includes('m3u8');
-  const isDash = url.includes('.mpd');
-
-  if (isHLS && Hls.isSupported()) {
-    hls = new Hls({
-      enableWorker: true,
-      lowLatencyMode: true,
-      backBufferLength: 90,
-      maxLoadingDelay: 4,
-      maxBufferLength: 30,
-      fragLoadingTimeOut: 20000,
-      manifestLoadingTimeOut: 15000
-    });
-    hls.loadSource(url);
-    hls.attachMedia(video);
-    hls.on(Hls.Events.MANIFEST_PARSED, () => {
-      video.play().catch(() => {});
-      showLoading(false);
-      isPlaying = true;
-      updatePlayIcons();
-    });
-    hls.on(Hls.Events.ERROR, (e, data) => {
-      if (data.fatal) {
-        showLoading(false);
-        showToast('Stream terputus, mencoba ulang...', 'warning');
-        const retryKey = ch ? ch.id : url;
-        streamRetries[retryKey] = (streamRetries[retryKey] || 0) + 1;
-        if (streamRetries[retryKey] < 3) {
-          setTimeout(() => loadStream(url, ch), 2000);
-        } else {
-          showToast('Gagal memuat stream', 'error');
-          streamRetries[retryKey] = 0;
+          el.querySelector(".ch-star").onclick = (e) => {
+            e.stopPropagation();
+            toggleFav(ch);
+            renderList();
+          };
+          el.onclick = () => {
+            const idx = filteredChannels.indexOf(ch);
+            if (idx !== -1) playChannel(idx);
+          };
+          spacer.appendChild(el);
+          vsRendered.set(i, el);
         }
       }
-    });
-  } else if (video.canPlayType('application/vnd.apple.mpegurl') && isHLS) {
-    video.src = url;
-    video.play().catch(() => {});
-    showLoading(false);
-    isPlaying = true;
-    updatePlayIcons();
-  } else {
-    video.src = url;
-    video.play().catch(e => {
-      showLoading(false);
-      showToast('Format tidak didukung browser', 'error');
-    });
-    isPlaying = true;
-    updatePlayIcons();
-  }
-}
 
-function updateInfoBar(ch) {
-  document.getElementById('info-name').textContent = ch.name;
-  document.getElementById('info-country').textContent = ch.country || '—';
-  document.getElementById('info-category').textContent = (ch.categories && ch.categories[0]) || '—';
+      $("ch-list-viewport").addEventListener(
+        "scroll",
+        () => {
+          requestAnimationFrame(renderVisibleItems);
+        },
+        { passive: true },
+      );
 
-  const logoWrap = document.getElementById('info-logo-wrap');
-  if (ch.logo) {
-    logoWrap.innerHTML = `<img src="${ch.logo}" alt="${ch.name}" onerror="this.src=''">`;
-  } else {
-    logoWrap.innerHTML = `<span style="font-size:13px;font-weight:700;color:var(--accent-primary)">${getInitials(ch.name)}</span>`;
-  }
-  document.title = `${ch.name} — NusaTV`;
-}
+      function ini(name) {
+        return name
+          .split(" ")
+          .slice(0, 2)
+          .map((w) => w[0])
+          .join("")
+          .toUpperCase();
+      }
 
-function showLoading(show) {
-  const overlay = document.getElementById('loading-overlay');
-  overlay.classList.toggle('visible', show);
-}
+      function toggleFav(ch) {
+        const idx = favorites.indexOf(ch.id);
+        if (idx === -1) {
+          favorites.push(ch.id);
+          toast(`${ch.name} ditambahkan ke favorit`, "ok");
+        } else {
+          favorites.splice(idx, 1);
+          toast(`${ch.name} dihapus dari favorit`, "info");
+        }
+        STORAGE.set("nusa_favs", favorites);
+      }
 
-function updatePlayIcons() {
-  document.getElementById('icon-play').style.display = isPlaying ? 'none' : 'block';
-  document.getElementById('icon-pause').style.display = isPlaying ? 'block' : 'none';
-  const centerBtn = document.getElementById('center-play-btn');
-  centerBtn.classList.toggle('visible', !isPlaying);
-  centerBtn.querySelector('svg').innerHTML = isPlaying
-    ? '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>'
-    : '<polygon points="5,3 19,12 5,21"/>';
-}
+      function addHistory(ch) {
+        history_ = history_.filter((h) => h.id !== ch.id);
+        history_.unshift({
+          id: ch.id,
+          name: ch.name,
+          logo: ch.logo,
+          country: ch.country,
+          time: Date.now(),
+        });
+        if (history_.length > 50) history_.pop();
+        STORAGE.set("nusa_hist", history_);
+      }
 
-function togglePlay() {
-  if (!video.src && !hls) return;
-  if (isPlaying) {
-    video.pause();
-    isPlaying = false;
-  } else {
-    video.play().catch(() => {});
-    isPlaying = true;
-  }
-  updatePlayIcons();
-}
+      function playChannel(index) {
+        if (index < 0 || index >= filteredChannels.length) return;
+        currentIndex = index;
+        const ch = filteredChannels[index];
+        const streams = channelStreamMap[ch.id] || (customChannels ? [{ url: ch.url }] : []);
+        if (!streams.length) {
+          toast("Tidak ada stream tersedia", "warn");
+          return;
+        }
+        currentChData = ch;
+        loadStream(streams[0].url || streams[0], ch);
+        renderVisibleItems();
+        const el = document.querySelector(".ch-item.on");
+        if (el) el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        updateInfoBar(ch);
+        $("no-stream").style.display = "none";
+        addHistory(ch);
+      }
 
-function applyZoom(delta, reset) {
-  if (reset) {
-    currentZoom = 1;
-  } else {
-    currentZoom = Math.min(zoomMax, Math.max(zoomMin, currentZoom + delta));
-  }
-  video.style.transform = `scale(${currentZoom})`;
-  const pct = Math.round(currentZoom * 100) + '%';
-  document.getElementById('zoom-display').textContent = pct;
+      function loadStream(url, ch) {
+        showLoad(true);
+        if (hls) {
+          hls.destroy();
+          hls = null;
+        }
+        vid.src = "";
+        teardownEQ();
+        const isM3U8 = url.includes(".m3u8") || !url.includes(".");
+        if (isM3U8 && Hls.isSupported()) {
+          hls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: true,
+            maxBufferLength: 20,
+            fragLoadingTimeOut: 18000,
+            manifestLoadingTimeOut: 12000,
+          });
+          hls.loadSource(url);
+          hls.attachMedia(vid);
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            vid.play().catch(() => {});
+            showLoad(false);
+            isPlaying = true;
+            updatePlayIcons();
+            buildQualityMenu();
+            setupEQ();
+          });
+          hls.on(Hls.Events.ERROR, (_, data) => {
+            if (data.fatal) {
+              showLoad(false);
+              const k = ch?.id || url;
+              retries[k] = (retries[k] || 0) + 1;
+              if (retries[k] < 3) {
+                toast("Mencoba ulang...", "warn");
+                setTimeout(() => loadStream(url, ch), 2500);
+              } else {
+                toast("Stream gagal dimuat", "err");
+                retries[k] = 0;
+              }
+            }
+          });
+        } else if (video.canPlayType("application/vnd.apple.mpegurl") && isM3U8) {
+          vid.src = url;
+          vid.play().catch(() => {});
+          showLoad(false);
+          isPlaying = true;
+          updatePlayIcons();
+          setupEQ();
+        } else {
+          vid.src = url;
+          vid.play().catch(() => {});
+          isPlaying = true;
+          updatePlayIcons();
+          setupEQ();
+          vid.oncanplay = () => showLoad(false);
+        }
+      }
 
-  const zOverlay = document.getElementById('zoom-overlay');
-  zOverlay.textContent = pct;
-  zOverlay.classList.add('visible');
-  clearTimeout(zoomHideTimer);
-  zoomHideTimer = setTimeout(() => zOverlay.classList.remove('visible'), 1500);
-}
+      function updateInfoBar(ch) {
+        $("info-name").textContent = ch.name;
+        $("info-meta").textContent =
+          [ch.country || "", (ch.categories && ch.categories[0]) || ""]
+            .filter(Boolean)
+            .join(" · ") || "—";
+        const logo = $("info-logo");
+        logo.innerHTML = ch.logo
+          ? `<img src="${ch.logo}" alt="" style="width:100%;height:100%;object-fit:contain" onerror="this.remove()">`
+          : `<span style="font-size:12px;font-weight:700;color:var(--c-acc)">${ini(ch.name)}</span>`;
+        document.title = `${ch.name} — NusaTV`;
+      }
 
-function setVolume(val) {
-  val = Math.min(100, Math.max(0, val));
-  video.volume = val / 100;
-  document.getElementById('volume-slider').value = val;
-  document.getElementById('volume-display').textContent = val + '%';
-  if (val === 0) {
-    isMuted = true;
-    document.getElementById('icon-vol').style.display = 'none';
-    document.getElementById('icon-muted').style.display = 'block';
-  } else {
-    isMuted = false;
-    document.getElementById('icon-vol').style.display = 'block';
-    document.getElementById('icon-muted').style.display = 'none';
-  }
-  const slider = document.getElementById('volume-slider');
-  slider.style.background = `linear-gradient(to right, var(--accent-primary) 0%, var(--accent-primary) ${val}%, var(--bg-elevated) ${val}%, var(--bg-elevated) 100%)`;
-}
+      function showLoad(on) {
+        $("load-ov").classList.toggle("on", on);
+      }
 
-function toggleMute() {
-  if (isMuted) {
-    video.muted = false;
-    isMuted = false;
-    const vol = Math.round(video.volume * 100) || 80;
-    setVolume(vol);
-  } else {
-    video.muted = true;
-    isMuted = true;
-    document.getElementById('icon-vol').style.display = 'none';
-    document.getElementById('icon-muted').style.display = 'block';
-  }
-}
+      function updatePlayIcons() {
+        $("ico-play").style.display = isPlaying ? "none" : "block";
+        $("ico-pause").style.display = isPlaying ? "block" : "none";
+        const cb = $("center-btn");
+        cb.classList.toggle("on", !isPlaying);
+        cb.querySelector("svg").innerHTML = isPlaying
+          ? '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>'
+          : '<polygon points="5,3 19,12 5,21"/>';
+      }
 
-function takeScreenshot() {
-  if (!video.src && !hls) return;
-  const canvas = document.createElement('canvas');
-  canvas.width = video.videoWidth || 1280;
-  canvas.height = video.videoHeight || 720;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  try {
-    const link = document.createElement('a');
-    link.download = `nusatv-screenshot-${Date.now()}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-    showToast('Screenshot tersimpan', 'success');
-  } catch (e) {
-    showToast('Gagal mengambil screenshot (CORS)', 'error');
-  }
-}
+      function togglePlay() {
+        if (!vid.src && !hls) return;
+        if (isPlaying) {
+          vid.pause();
+          isPlaying = false;
+        } else {
+          vid.play().catch(() => {});
+          isPlaying = true;
+        }
+        updatePlayIcons();
+      }
 
-function togglePiP() {
-  if (document.pictureInPictureElement) {
-    document.exitPictureInPicture();
-    document.getElementById('pip-indicator').style.display = 'none';
-  } else if (video.readyState >= 2) {
-    video.requestPictureInPicture().then(() => {
-      document.getElementById('pip-indicator').style.display = 'block';
-      showToast('Mode Picture-in-Picture aktif', 'info');
-    }).catch(() => showToast('PiP tidak didukung browser ini', 'warning'));
-  }
-}
+      function applyZoom(delta, reset) {
+        if (reset) currentZoom = 1;
+        else currentZoom = Math.min(zoomMax, Math.max(zoomMin, currentZoom + delta));
+        vid.style.transform = `scale(${currentZoom})`;
+        const p = Math.round(currentZoom * 100) + "%";
+        $("zoom-val").textContent = p;
+        $("zoom-ov").textContent = p;
+        $("zoom-ov").classList.add("on");
+        clearTimeout(zoomTimer);
+        zoomTimer = setTimeout(() => $("zoom-ov").classList.remove("on"), 1400);
+      }
 
-function toggleFullscreen() {
-  if (!document.fullscreenElement) {
-    document.getElementById('app').requestFullscreen().catch(() => {});
-    document.getElementById('icon-fs-expand').style.display = 'none';
-    document.getElementById('icon-fs-compress').style.display = 'block';
-  } else {
-    document.exitFullscreen();
-    document.getElementById('icon-fs-expand').style.display = 'block';
-    document.getElementById('icon-fs-compress').style.display = 'none';
-  }
-}
+      function setVolume(v) {
+        v = Math.min(100, Math.max(0, v));
+        vid.volume = v / 100;
+        $("vol-sl").value = v;
+        $("vol-val").textContent = v + "%";
+        $("vol-sl").style.background =
+          `linear-gradient(to right,var(--c-acc) 0%,var(--c-acc) ${v}%,var(--c-bg3) ${v}%,var(--c-bg3) 100%)`;
+        isMuted = v === 0;
+        $("ico-vol").style.display = isMuted ? "none" : "block";
+        $("ico-mut").style.display = isMuted ? "block" : "none";
+      }
 
-function toggleTheater() {
-  theaterMode = !theaterMode;
-  document.getElementById('app').classList.toggle('theater-mode', theaterMode);
-  document.getElementById('btn-theater').classList.toggle('active', theaterMode);
-  showToast(theaterMode ? 'Theater Mode aktif' : 'Theater Mode nonaktif', 'info');
-}
+      function toggleMute() {
+        if (isMuted) {
+          vid.muted = false;
+          isMuted = false;
+          const v = Math.round(vid.volume * 100) || 80;
+          setVolume(v);
+        } else {
+          vid.muted = true;
+          isMuted = true;
+          $("ico-vol").style.display = "none";
+          $("ico-mut").style.display = "block";
+        }
+      }
 
-function prevChannel() {
-  if (currentIndex > 0) playChannel(currentIndex - 1);
-  else if (filteredChannels.length) playChannel(filteredChannels.length - 1);
-}
+      function takeScreenshot() {
+        if (!vid.src && !hls) return;
+        const c = document.createElement("canvas");
+        c.width = vid.videoWidth || 1280;
+        c.height = vid.videoHeight || 720;
+        c.getContext("2d").drawImage(vid, 0, 0, c.width, c.height);
+        try {
+          const a = document.createElement("a");
+          a.download = `nusatv-${Date.now()}.png`;
+          a.href = c.toDataURL("image/png");
+          a.click();
+          toast("Screenshot disimpan", "ok");
+        } catch {
+          toast("Screenshot gagal (CORS)", "err");
+        }
+      }
 
-function nextChannel() {
-  if (currentIndex < filteredChannels.length - 1) playChannel(currentIndex + 1);
-  else playChannel(0);
-}
+      function togglePiP() {
+        if (document.pictureInPictureElement) {
+          document.exitPictureInPicture();
+        } else if (vid.readyState >= 2)
+          vid
+            .requestPictureInPicture()
+            .then(() => toast("PiP aktif", "info"))
+            .catch(() => toast("PiP tidak didukung", "warn"));
+      }
 
-function updateProgressBar() {
-  if (video.duration && isFinite(video.duration)) {
-    const pct = (video.currentTime / video.duration) * 100;
-    document.getElementById('progress-fill').style.width = pct + '%';
-    const cur = fmtTime(video.currentTime);
-    const dur = fmtTime(video.duration);
-    document.getElementById('time-display').textContent = `${cur} / ${dur}`;
-  } else {
-    document.getElementById('progress-fill').style.width = '100%';
-    document.getElementById('time-display').textContent = '— / LIVE';
-  }
-}
+      function toggleFS() {
+        if (!document.fullscreenElement) {
+          $("app")
+            .requestFullscreen()
+            .catch(() => {});
+          $("ico-exp").style.display = "none";
+          $("ico-com").style.display = "block";
+        } else {
+          document.exitFullscreen();
+          $("ico-exp").style.display = "block";
+          $("ico-com").style.display = "none";
+        }
+      }
 
-function fmtTime(s) {
-  if (!isFinite(s)) return '00:00';
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = Math.floor(s % 60);
-  if (h) return `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-}
+      function toggleTheater() {
+        theaterMode = !theaterMode;
+        $("app").classList.toggle("theater", theaterMode);
+        $("btn-theater").classList.toggle("on", theaterMode);
+      }
 
-video.addEventListener('play', () => { isPlaying = true; updatePlayIcons(); showLoading(false); });
-video.addEventListener('pause', () => { isPlaying = false; updatePlayIcons(); });
-video.addEventListener('waiting', () => showLoading(true));
-video.addEventListener('canplay', () => showLoading(false));
-video.addEventListener('timeupdate', updateProgressBar);
-video.addEventListener('leavepictureinpicture', () => {
-  document.getElementById('pip-indicator').style.display = 'none';
-});
-video.addEventListener('dblclick', toggleFullscreen);
+      function prevChannel() {
+        if (filteredChannels.length)
+          playChannel((currentIndex - 1 + filteredChannels.length) % filteredChannels.length);
+      }
+      function nextChannel() {
+        if (filteredChannels.length) playChannel((currentIndex + 1) % filteredChannels.length);
+      }
 
-document.getElementById('btn-play').addEventListener('click', togglePlay);
-document.getElementById('center-play-btn').addEventListener('click', togglePlay);
-document.getElementById('btn-prev').addEventListener('click', prevChannel);
-document.getElementById('btn-next').addEventListener('click', nextChannel);
-document.getElementById('btn-mute').addEventListener('click', toggleMute);
-document.getElementById('btn-fullscreen').addEventListener('click', toggleFullscreen);
-document.getElementById('btn-theater').addEventListener('click', toggleTheater);
-document.getElementById('btn-screenshot').addEventListener('click', takeScreenshot);
-document.getElementById('btn-pip').addEventListener('click', togglePiP);
-document.getElementById('hov-screenshot').addEventListener('click', takeScreenshot);
-document.getElementById('hov-pip').addEventListener('click', togglePiP);
-document.getElementById('hov-fullscreen').addEventListener('click', toggleFullscreen);
+      function buildQualityMenu() {
+        const menu = $("ql-menu"),
+          btn = $("ql-btn");
+        menu.innerHTML = "";
+        if (!hls || !hls.levels.length) {
+          btn.textContent = "AUTO ▾";
+          return;
+        }
+        const levels = hls.levels;
+        const addOpt = (label, idx) => {
+          const el = document.createElement("div");
+          el.className = "ql-opt" + (hls.currentLevel === idx ? " on" : "");
+          el.textContent = label;
+          el.onclick = () => {
+            hls.currentLevel = idx;
+            btn.textContent = label + " ▾";
+            menu.querySelectorAll(".ql-opt").forEach((o) => o.classList.remove("on"));
+            el.classList.add("on");
+            $("ql-menu").classList.remove("on");
+            qlOpen = false;
+          };
+          menu.appendChild(el);
+        };
+        addOpt("AUTO", -1);
+        levels.forEach((l, i) =>
+          addOpt(
+            `${l.height || i}p${l.attrs?.BANDWIDTH ? " · " + Math.round(l.attrs.BANDWIDTH / 1000) + "k" : ""}`,
+            i,
+          ),
+        );
+        btn.textContent = "AUTO ▾";
+      }
 
-document.getElementById('btn-zoom-in').addEventListener('click', () => applyZoom(zoomStep));
-document.getElementById('btn-zoom-out').addEventListener('click', () => applyZoom(-zoomStep));
-document.getElementById('btn-zoom-reset').addEventListener('click', () => applyZoom(0, true));
-document.getElementById('hov-zoom-in').addEventListener('click', () => applyZoom(zoomStep));
-document.getElementById('hov-zoom-out').addEventListener('click', () => applyZoom(-zoomStep));
-document.getElementById('hov-zoom-reset').addEventListener('click', () => applyZoom(0, true));
+      $("ql-btn").onclick = (e) => {
+        e.stopPropagation();
+        qlOpen = !qlOpen;
+        $("ql-menu").classList.toggle("on", qlOpen);
+      };
+      document.addEventListener("click", () => {
+        if (qlOpen) {
+          $("ql-menu").classList.remove("on");
+          qlOpen = false;
+        }
+      });
 
-document.getElementById('volume-slider').addEventListener('input', e => setVolume(+e.target.value));
+      let rafProg = null;
+      function updateProg() {
+        if (vid.duration && isFinite(vid.duration)) {
+          $("prog-fill").style.width = (vid.currentTime / vid.duration) * 100 + "%";
+          $("time-disp").textContent = `${fmt(vid.currentTime)} / ${fmt(vid.duration)}`;
+        } else {
+          $("prog-fill").style.width = "100%";
+          $("time-disp").textContent = "— / LIVE";
+        }
+      }
+      function fmt(s) {
+        if (!isFinite(s)) return "00:00";
+        const h = Math.floor(s / 3600),
+          m = Math.floor((s % 3600) / 60),
+          sec = Math.floor(s % 60);
+        return h
+          ? `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`
+          : `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+      }
 
-document.getElementById('btn-toggle-sidebar').addEventListener('click', () => {
-  document.getElementById('app').classList.toggle('sidebar-collapsed');
-});
+      function setupEQ() {
+        teardownEQ();
+        try {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          srcNode = audioCtx.createMediaElementSource(vid);
+          eqFilters = EQ_BANDS.map((band, i) => {
+            const f = audioCtx.createBiquadFilter();
+            f.type = band.type;
+            f.frequency.value = band.freq;
+            f.gain.value = eqValues[i] || 0;
+            return f;
+          });
+          [srcNode, ...eqFilters, audioCtx.destination].reduce((a, b) => {
+            a.connect(b);
+            return b;
+          });
+        } catch (e) {
+          audioCtx = null;
+          eqFilters = [];
+        }
+      }
 
-document.getElementById('search-input').addEventListener('input', e => {
-  searchQuery = e.target.value;
-  renderChannelList();
-});
+      function teardownEQ() {
+        try {
+          if (srcNode) srcNode.disconnect();
+          if (audioCtx) audioCtx.close();
+        } catch {}
+        audioCtx = null;
+        srcNode = null;
+        eqFilters = [];
+      }
 
-let allCountryCodes = [];
-let allCountryCountMap = {};
+      function buildEQGrid() {
+        const grid = $("eq-grid");
+        grid.innerHTML = "";
+        EQ_BANDS.forEach((band, i) => {
+          const row = document.createElement("div");
+          row.className = "eq-band";
+          const sl = document.createElement("input");
+          sl.type = "range";
+          sl.min = "-12";
+          sl.max = "12";
+          sl.value = eqValues[i] || 0;
+          sl.className = "eq-sl";
+          const val = document.createElement("div");
+          val.className = "eq-val";
+          val.textContent = (eqValues[i] >= 0 ? "+" : "") + eqValues[i] + "dB";
+          sl.oninput = () => {
+            const v = +sl.value;
+            eqValues[i] = v;
+            val.textContent = (v >= 0 ? "+" : "") + v + "dB";
+            if (eqFilters[i]) eqFilters[i].gain.value = v;
+            STORAGE.set("nusa_eq", eqValues);
+          };
+          row.innerHTML = `<div class="eq-label">${band.label}</div>`;
+          row.appendChild(sl);
+          row.appendChild(val);
+          grid.appendChild(row);
+        });
+      }
 
-function buildCountryDropdown(codes, countMap) {
-  allCountryCodes = codes;
-  allCountryCountMap = countMap;
-  renderCountryList(codes, countMap, '');
-}
+      function applyEQPreset(preset) {
+        eqValues = [...EQ_PRESETS[preset]];
+        STORAGE.set("nusa_eq", eqValues);
+        eqFilters.forEach((f, i) => {
+          if (f) f.gain.value = eqValues[i];
+        });
+        buildEQGrid();
+      }
 
-function renderCountryList(codes, countMap, query) {
-  const list = document.getElementById('country-list');
-  const empty = document.getElementById('country-empty');
-  const q = query.toLowerCase();
+      function buildThemeGrid() {
+        const grid = $("theme-grid");
+        grid.innerHTML = "";
+        THEMES.forEach((t) => {
+          const card = document.createElement("div");
+          card.className = "theme-card" + (currentTheme === t.id ? " on" : "");
+          card.innerHTML = `<div class="tc-colors">${t.colors.map((c) => `<div class="tc-dot" style="background:${c}"></div>`).join("")}</div><div class="tc-label">${t.label}</div>`;
+          card.onclick = () => {
+            currentTheme = t.id;
+            document.documentElement.setAttribute("data-theme", t.id);
+            STORAGE.set("nusa_theme", t.id);
+            grid
+              .querySelectorAll(".theme-card")
+              .forEach((c) => c.classList.toggle("on", c === card));
+          };
+          grid.appendChild(card);
+        });
+      }
 
-  const filtered = codes.filter(code => {
-    const info = countryMap[code];
-    const name = info ? info.name.toLowerCase() : code.toLowerCase();
-    return name.includes(q) || code.toLowerCase().includes(q);
-  });
+      function openModal(id) {
+        document.getElementById(id).classList.add("on");
+      }
+      function closeModal(id) {
+        document.getElementById(id).classList.remove("on");
+      }
 
-  list.innerHTML = '';
+      document.querySelectorAll(".modal-close").forEach((btn) => {
+        btn.onclick = () => closeModal(btn.dataset.close);
+      });
+      document.querySelectorAll(".modal-bg").forEach((bg) => {
+        bg.onclick = (e) => {
+          if (e.target === bg) bg.classList.remove("on");
+        };
+      });
 
-  const allItem = document.createElement('div');
-  allItem.className = 'country-option' + (!activeCountry ? ' selected' : '');
-  allItem.dataset.value = '';
-  allItem.innerHTML = `
-    <span class="co-flag">🌍</span>
-    <span class="co-name">Semua Negara</span>
-    <svg class="co-check" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
-  allItem.addEventListener('click', () => selectCountry('', 'Semua Negara', '🌍'));
-  if (!q) list.appendChild(allItem);
+      function renderFavModal() {
+        const body = $("fav-body");
+        if (!favorites.length) {
+          body.innerHTML =
+            '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><p>Belum ada favorit</p></div>';
+          return;
+        }
+        const channels = getChannels();
+        const favChs = favorites.map((id) => channels.find((c) => c.id === id)).filter(Boolean);
+        body.innerHTML = "";
+        favChs.forEach((ch) => {
+          const el = document.createElement("div");
+          el.className = "fav-item";
+          el.innerHTML = `<div class="fi-logo">${ch.logo ? `<img src="${ch.logo}" alt="" style="width:100%;height:100%;object-fit:contain" onerror="this.remove()">` : `<span style="font-size:11px;font-weight:700;color:var(--c-acc)">${ini(ch.name)}</span>`}</div><div class="fi-name">${ch.name}</div><button class="fi-del" data-id="${ch.id}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+          el.querySelector(".fi-del").onclick = (e) => {
+            e.stopPropagation();
+            toggleFav(ch);
+            renderFavModal();
+            renderList();
+          };
+          el.onclick = () => {
+            const idx = filteredChannels.indexOf(ch);
+            if (idx !== -1) {
+              playChannel(idx);
+              closeModal("m-fav");
+            }
+          };
+          body.appendChild(el);
+        });
+      }
 
-  filtered.forEach(code => {
-    const info = countryMap[code];
-    const name = info ? info.name : code;
-    const flag = info ? info.flag : '🏳️';
-    const count = countMap[code] || 0;
-    const item = document.createElement('div');
-    item.className = 'country-option' + (activeCountry === code ? ' selected' : '');
-    item.dataset.value = code;
-    item.innerHTML = `
-      <span class="co-flag">${flag}</span>
-      <span class="co-name">${name}</span>
-      <span class="co-count">${count}</span>
-      <svg class="co-check" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
-    item.addEventListener('click', () => selectCountry(code, name, flag));
-    list.appendChild(item);
-  });
+      function renderHistModal() {
+        const body = $("hist-body");
+        if (!history_.length) {
+          body.innerHTML =
+            '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><p>Belum ada riwayat</p></div>';
+          return;
+        }
+        const channels = getChannels();
+        body.innerHTML = "";
+        history_.forEach((h) => {
+          const ch = channels.find((c) => c.id === h.id) || h;
+          const el = document.createElement("div");
+          el.className = "hist-item";
+          const ago = timeAgo(h.time);
+          el.innerHTML = `<div class="fi-logo">${h.logo ? `<img src="${h.logo}" alt="" style="width:100%;height:100%;object-fit:contain" onerror="this.remove()">` : `<span style="font-size:11px;font-weight:700;color:var(--c-acc)">${ini(h.name)}</span>`}</div><div style="flex:1"><div class="fi-name">${h.name}</div><div class="fi-time">${ago}</div></div><button class="fi-del" title="Hapus"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+          el.querySelector(".fi-del").onclick = (e) => {
+            e.stopPropagation();
+            history_ = history_.filter((x) => x.id !== h.id);
+            STORAGE.set("nusa_hist", history_);
+            renderHistModal();
+          };
+          el.onclick = () => {
+            const idx = filteredChannels.findIndex((c) => c.id === ch.id);
+            if (idx !== -1) {
+              playChannel(idx);
+              closeModal("m-hist");
+            }
+          };
+          body.appendChild(el);
+        });
+      }
 
-  empty.classList.toggle('show', filtered.length === 0);
-}
+      function timeAgo(ts) {
+        const d = Date.now() - ts,
+          m = Math.floor(d / 60000),
+          h = Math.floor(d / 3600000);
+        if (d < 60000) return "Baru saja";
+        if (d < 3600000) return `${m} menit lalu`;
+        if (d < 86400000) return `${h} jam lalu`;
+        return new Date(ts).toLocaleDateString("id-ID");
+      }
 
-function selectCountry(code, name, flag) {
-  activeCountry = code;
-  document.getElementById('country-trigger').querySelector('.trigger-flag').textContent = flag;
-  document.getElementById('country-trigger').querySelector('.trigger-label').textContent = name;
-  closeCountryPanel();
-  renderCountryList(allCountryCodes, allCountryCountMap, document.getElementById('country-search-input').value);
-  renderChannelList();
-}
+      function renderEPG() {
+        const body = $("epg-body");
+        $("epg-title").textContent = `📅 ${currentChData?.name || "Jadwal Acara"}`;
+        const now = new Date();
+        const prog = generateEPG(now, currentChData);
+        body.innerHTML = "";
+        prog.forEach((p, i) => {
+          const el = document.createElement("div");
+          el.className = "epg-row" + (i === 2 ? " epg-now" : "");
+          el.innerHTML = `<div class="epg-time">${p.time}${i === 2 ? " • SEKARANG" : ""}</div><div class="epg-prog">${p.title}</div><div class="epg-desc">${p.desc}</div>`;
+          body.appendChild(el);
+        });
+      }
 
-function openCountryPanel() {
-  document.getElementById('country-panel').classList.add('open');
-  document.getElementById('country-trigger').classList.add('open');
-  document.getElementById('country-search-input').focus();
-  document.getElementById('country-search-input').value = '';
-  renderCountryList(allCountryCodes, allCountryCountMap, '');
-}
+      function generateEPG(now, ch) {
+        const cat = ch?.categories?.[0] || "general";
+        const prog = {
+          general: [
+            "Berita Pagi",
+            "Talk Show",
+            "Sinetron",
+            "Berita Siang",
+            "Variety Show",
+            "Film Sore",
+            "Sinetron Malam",
+            "Late Night Show",
+          ],
+          news: [
+            "Headline News",
+            "Market Update",
+            "Breaking News",
+            "World Report",
+            "Prime News",
+            "Investigasi",
+            "Malam Ini",
+            "Roundup",
+          ],
+          sports: [
+            "Sports Center",
+            "Live Match Preview",
+            "Highlight",
+            "Sport News",
+            "Live Game",
+            "Post-Match Analysis",
+            "Sport Tonight",
+            "Sport Sunday",
+          ],
+          movies: [
+            "Film Pagi",
+            "Short Film",
+            "Cinema World",
+            "Film Siang",
+            "Bioskop Indonesia",
+            "Film Malam",
+            "Late Night Cinema",
+            "Indie Film",
+          ],
+          music: [
+            "Top Chart",
+            "Morning Music",
+            "Music Video",
+            "Request Show",
+            "Live Concert",
+            "Music News",
+            "Night Music",
+            "Acoustic Session",
+          ],
+          kids: [
+            "Kartun Pagi",
+            "Cerita Anak",
+            "Belajar Bersama",
+            "Dongeng",
+            "Sains Anak",
+            "Kreasi",
+            "Film Animasi",
+            "Good Night Story",
+          ],
+        };
+        const titles = prog[cat] || prog.general;
+        const h = now.getHours();
+        return Array.from({ length: 8 }, (_, i) => {
+          const slot = new Date(now);
+          slot.setHours(h - 2 + i, i % 2 === 0 ? 0 : 30, 0, 0);
+          return {
+            time: slot.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }),
+            title: titles[(h - 2 + i + 24) % titles.length] || "Program",
+            desc: "Durasi 30 menit",
+          };
+        });
+      }
 
-function closeCountryPanel() {
-  document.getElementById('country-panel').classList.remove('open');
-  document.getElementById('country-trigger').classList.remove('open');
-}
+      function parseM3U(text) {
+        const lines = text.split("\n");
+        const channels = [];
+        let current = null;
+        lines.forEach((line) => {
+          line = line.trim();
+          if (line.startsWith("#EXTINF")) {
+            current = {
+              id: "custom-" + Math.random().toString(36).slice(2),
+              categories: [],
+              country: "",
+              alt_names: [],
+            };
+            const nameM = line.match(/,(.+)$/);
+            if (nameM) current.name = nameM[1].trim();
+            const logoM = line.match(/tvg-logo="([^"]*)"/);
+            if (logoM) current.logo = logoM[1];
+            const groupM = line.match(/group-title="([^"]*)"/);
+            if (groupM) current.categories = [groupM[1].toLowerCase()];
+            const ctrM = line.match(/tvg-country="([^"]*)"/);
+            if (ctrM) current.country = ctrM[1].toUpperCase();
+          } else if (line.startsWith("http") && current) {
+            current.url = line;
+            channels.push(current);
+            current = null;
+          }
+        });
+        return channels;
+      }
 
-document.getElementById('country-trigger').addEventListener('click', e => {
-  e.stopPropagation();
-  const isOpen = document.getElementById('country-panel').classList.contains('open');
-  if (isOpen) closeCountryPanel(); else openCountryPanel();
-});
+      $("m3u-drop").onclick = () => $("m3u-file").click();
+      $("m3u-file").onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const chs = parseM3U(ev.target.result);
+          if (!chs.length) {
+            toast("File M3U tidak valid atau kosong", "err");
+            return;
+          }
+          customChannels = chs;
+          filteredChannels = chs;
+          currentIndex = -1;
+          renderList();
+          closeModal("m-m3u");
+          toast(`${chs.length} channel M3U dimuat`, "ok");
+        };
+        reader.readAsText(file);
+      };
 
-document.getElementById('country-search-input').addEventListener('input', e => {
-  renderCountryList(allCountryCodes, allCountryCountMap, e.target.value);
-});
+      ["dragover", "dragleave", "drop"].forEach((evt) => {
+        $("m3u-drop").addEventListener(evt, (e) => {
+          e.preventDefault();
+          $("m3u-drop").classList.toggle("over", evt === "dragover");
+          if (evt === "drop") {
+            const file = e.dataTransfer.files[0];
+            if (file) {
+              const r = new FileReader();
+              r.onload = (ev) => {
+                const chs = parseM3U(ev.target.result);
+                if (chs.length) {
+                  customChannels = chs;
+                  filteredChannels = chs;
+                  currentIndex = -1;
+                  renderList();
+                  closeModal("m-m3u");
+                  toast(`${chs.length} channel M3U dimuat`, "ok");
+                }
+              };
+              r.readAsText(file);
+            }
+          }
+        });
+      });
 
-document.getElementById('country-search-input').addEventListener('click', e => e.stopPropagation());
-document.getElementById('country-panel').addEventListener('click', e => e.stopPropagation());
+      $("m3u-load-url").onclick = async () => {
+        const url = $("m3u-url").value.trim();
+        if (!url) return;
+        $("m3u-load-url").textContent = "Memuat...";
+        try {
+          const r = await fetch(url);
+          const text = await r.text();
+          const chs = parseM3U(text);
+          if (!chs.length) {
+            toast("URL tidak menghasilkan channel valid", "err");
+            return;
+          }
+          customChannels = chs;
+          filteredChannels = chs;
+          currentIndex = -1;
+          renderList();
+          closeModal("m-m3u");
+          toast(`${chs.length} channel M3U dimuat`, "ok");
+        } catch {
+          toast("Gagal memuat URL (mungkin CORS)", "err");
+        } finally {
+          $("m3u-load-url").textContent = "Load dari URL";
+        }
+      };
 
-document.addEventListener('click', () => closeCountryPanel());
+      $("m3u-reset").onclick = () => {
+        customChannels = null;
+        currentIndex = -1;
+        renderList();
+        closeModal("m-m3u");
+        toast("Reset ke IPTV-ORG", "info");
+      };
 
-document.querySelectorAll('.cat-tab').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    activeCategory = btn.dataset.cat;
-    renderChannelList();
-  });
-});
+      vid.addEventListener("play", () => {
+        isPlaying = true;
+        updatePlayIcons();
+        showLoad(false);
+      });
+      vid.addEventListener("pause", () => {
+        isPlaying = false;
+        updatePlayIcons();
+      });
+      vid.addEventListener("waiting", () => showLoad(true));
+      vid.addEventListener("canplay", () => showLoad(false));
+      vid.addEventListener("timeupdate", () => {
+        if (!rafProg)
+          rafProg = requestAnimationFrame(() => {
+            updateProg();
+            rafProg = null;
+          });
+      });
+      vid.addEventListener("dblclick", toggleFS);
+      vid.addEventListener("leavepictureinpicture", () => {});
 
-document.getElementById('progress-track').addEventListener('click', e => {
-  if (!video.duration || !isFinite(video.duration)) return;
-  const rect = e.currentTarget.getBoundingClientRect();
-  const pct = (e.clientX - rect.left) / rect.width;
-  video.currentTime = pct * video.duration;
-});
+      $("btn-play").onclick = togglePlay;
+      $("center-btn").onclick = togglePlay;
+      $("btn-prev").onclick = prevChannel;
+      $("btn-next").onclick = nextChannel;
+      $("btn-mute").onclick = toggleMute;
+      $("btn-fs").onclick = toggleFS;
+      $("btn-theater").onclick = toggleTheater;
+      $("btn-ss").onclick = takeScreenshot;
+      $("btn-pip").onclick = togglePiP;
+      $("hov-ss").onclick = takeScreenshot;
+      $("hov-pip").onclick = togglePiP;
+      $("hov-fs").onclick = toggleFS;
+      $("btn-zin").onclick = () => applyZoom(zoomStep);
+      $("btn-zout").onclick = () => applyZoom(-zoomStep);
+      $("btn-zreset").onclick = () => applyZoom(0, true);
+      $("hov-zin").onclick = () => applyZoom(zoomStep);
+      $("hov-zout").onclick = () => applyZoom(-zoomStep);
+      $("hov-zreset").onclick = () => applyZoom(0, true);
+      $("hov-fav").onclick = () => {
+        if (currentChData) {
+          toggleFav(currentChData);
+          renderList();
+        }
+      };
+      $("vol-sl").oninput = (e) => setVolume(+e.target.value);
+      $("btn-sb").onclick = () => $("app").classList.toggle("sb-off");
+      $("prog").onclick = (e) => {
+        if (!vid.duration || !isFinite(vid.duration)) return;
+        const r = e.currentTarget.getBoundingClientRect();
+        vid.currentTime = ((e.clientX - r.left) / r.width) * vid.duration;
+      };
+      $("btn-fav").onclick = () => {
+        renderFavModal();
+        openModal("m-fav");
+      };
+      $("btn-hist").onclick = () => {
+        renderHistModal();
+        openModal("m-hist");
+      };
+      $("btn-m3u").onclick = () => openModal("m-m3u");
+      $("btn-epg").onclick = () => {
+        renderEPG();
+        openModal("m-epg");
+      };
+      $("btn-theme").onclick = () => {
+        buildThemeGrid();
+        openModal("m-theme");
+      };
+      $("btn-eq").onclick = () => {
+        buildEQGrid();
+        openModal("m-eq");
+      };
+      $("eq-flat").onclick = () => applyEQPreset("flat");
+      $("eq-bass").onclick = () => applyEQPreset("bass");
+      $("eq-vocal").onclick = () => applyEQPreset("vocal");
+      $("eq-cinema").onclick = () => applyEQPreset("cinema");
 
-document.addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-  switch (e.key) {
-    case ' ':
-    case 'k':
-      e.preventDefault(); togglePlay(); break;
-    case 'f':
-    case 'F':
-      toggleFullscreen(); break;
-    case 'm':
-    case 'M':
-      toggleMute(); break;
-    case 'ArrowUp':
-      e.preventDefault(); setVolume(Math.round(video.volume * 100) + 5); break;
-    case 'ArrowDown':
-      e.preventDefault(); setVolume(Math.round(video.volume * 100) - 5); break;
-    case 'ArrowRight':
-      e.preventDefault(); nextChannel(); break;
-    case 'ArrowLeft':
-      e.preventDefault(); prevChannel(); break;
-    case '+':
-    case '=':
-      applyZoom(zoomStep); break;
-    case '-':
-    case '_':
-      applyZoom(-zoomStep); break;
-    case '0':
-      applyZoom(0, true); break;
-    case 'p':
-    case 'P':
-      togglePiP(); break;
-    case 't':
-    case 'T':
-      toggleTheater(); break;
-    case 's':
-    case 'S':
-      takeScreenshot(); break;
-  }
-});
+      document.querySelectorAll(".tab").forEach((btn) => {
+        btn.onclick = () => {
+          document.querySelectorAll(".tab").forEach((b) => b.classList.remove("on"));
+          btn.classList.add("on");
+          activeCategory = btn.dataset.cat;
+          renderList();
+        };
+      });
 
-let wheelTimeout;
-document.getElementById('video-wrapper').addEventListener('wheel', e => {
-  e.preventDefault();
-  const delta = e.deltaY < 0 ? zoomStep : -zoomStep;
-  applyZoom(delta);
-  clearTimeout(wheelTimeout);
-}, { passive: false });
+      let searchDebounce;
+      $("search-input").oninput = (e) => {
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(() => {
+          searchQuery = e.target.value;
+          renderList();
+        }, 250);
+      };
 
-setVolume(80);
-loadData();
-</script>
-</body>
+      document.addEventListener("keydown", (e) => {
+        if (e.target.tagName === "INPUT") return;
+        switch (e.key) {
+          case " ":
+          case "k":
+            e.preventDefault();
+            togglePlay();
+            break;
+          case "f":
+          case "F":
+            toggleFS();
+            break;
+          case "m":
+          case "M":
+            toggleMute();
+            break;
+          case "ArrowUp":
+            e.preventDefault();
+            setVolume(Math.round(vid.volume * 100) + 5);
+            break;
+          case "ArrowDown":
+            e.preventDefault();
+            setVolume(Math.round(vid.volume * 100) - 5);
+            break;
+          case "ArrowRight":
+            e.preventDefault();
+            nextChannel();
+            break;
+          case "ArrowLeft":
+            e.preventDefault();
+            prevChannel();
+            break;
+          case "+":
+          case "=":
+            applyZoom(zoomStep);
+            break;
+          case "-":
+          case "_":
+            applyZoom(-zoomStep);
+            break;
+          case "0":
+            applyZoom(0, true);
+            break;
+          case "p":
+          case "P":
+            togglePiP();
+            break;
+          case "t":
+          case "T":
+            toggleTheater();
+            break;
+          case "s":
+          case "S":
+            takeScreenshot();
+            break;
+          case "Escape":
+            document.querySelectorAll(".modal-bg.on").forEach((m) => m.classList.remove("on"));
+            break;
+        }
+      });
+
+      $("vwrap").addEventListener(
+        "wheel",
+        (e) => {
+          e.preventDefault();
+          applyZoom(e.deltaY < 0 ? zoomStep : -zoomStep);
+        },
+        { passive: false },
+      );
+
+      document.documentElement.setAttribute("data-theme", currentTheme);
+      setVolume(80);
+      loadData();
+    </script>
+  </body>
 </html>
